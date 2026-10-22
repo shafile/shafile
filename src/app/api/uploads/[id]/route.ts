@@ -11,8 +11,8 @@ export async function GET(
   try {
     const { id } = await context.params;
     const token = requireBearerToken(request);
-    const row = requireUploadSession(id, token, true);
-    return apiJson(uploadStatus(row));
+    const row = await requireUploadSession(id, token, true);
+    return apiJson(await uploadStatus(row));
   } catch (error) {
     return routeError(error);
   }

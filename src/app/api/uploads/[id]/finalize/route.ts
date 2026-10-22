@@ -26,7 +26,7 @@ export async function POST(
     assertSameOrigin(request);
     const { id } = await context.params;
     const token = requireBearerToken(request);
-    const row = requireUploadSession(id, token, true);
+    const row = await requireUploadSession(id, token, true);
     const parsed = schema.safeParse(
       await readJsonLimited(request, MAX_MANIFEST_BYTES * 2 + 1024),
     );

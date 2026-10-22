@@ -4,6 +4,8 @@
 
 [English](README.md) · [简体中文](README.zh-CN.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · **Русский** · [العربية](README.ar.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · [हिन्दी](README.hi.md) · [Español (México)](README.es-MX.md)
 
+**Демо (Cloudflare Workers):** <https://shafile.laoju.wang>
+
 </center>
 
 ## 1. Введение
@@ -69,6 +71,13 @@ docker compose up --build -d
 
 GitHub Actions (`.github/workflows/ci.yml`) запускает lint, проверку типов, проверку i18n, модульные тесты, production-сборку, Playwright E2E и сборку Docker-образа.
 
+### Cloudflare
+
+Поддерживаются два варианта.
+
+- [Cloudflare Tunnel](docs/cloudflare.md): сохраняет Node.js, SQLite, локальный диск, потоковую передачу и очистку.
+- [Workers + D1 + R2](docs/cloudflare-workers.md): полностью serverless на Cloudflare, но с квотами Workers, D1 и R2.
+
 ### Переменные окружения
 
 | Переменная | По умолчанию | Описание |
@@ -81,6 +90,7 @@ GitHub Actions (`.github/workflows/ci.yml`) запускает lint, прове�
 | `MAX_SHARE_BYTES` | 5 GiB | Лимит на файл |
 | `MAX_STORAGE_BYTES` | 50 GiB | Общий лимит хранилища |
 | `TRUST_PROXY` | `false` | `true` при работе за прокси |
+| `CRON_SECRET` | — | Секрет внутренней очистки Cloudflare |
 
 ### Команды
 
@@ -93,6 +103,9 @@ pnpm typecheck    # TypeScript
 pnpm test         # Модульные тесты
 pnpm test:e2e     # E2E-тесты Playwright
 pnpm i18n:check   # Проверка ключей и подстановок сообщений
+pnpm cf:build     # Cloudflare Worker build
+pnpm cf:preview   # Local D1/R2 preview
+pnpm cf:deploy    # Deploy Worker
 ```
 
 Для первого запуска Playwright нужен `pnpm exec playwright install chromium`. Потоковое скачивание больших файлов лучше всего работает в Chromium-браузерах (Chrome, Edge). В остальных браузерах используется расшифровка в памяти с лимитом 256 MiB.

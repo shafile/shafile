@@ -77,3 +77,129 @@ jobs:
 
       - name: Build image
         run: docker build -t shafile:ci .
+
+  cloudflare:
+    name: Cloudflare Worker build and E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12.9.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Cloudflare Worker
+        run: pnpm cf:build
+
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Create local secrets
+        run: |
+          cat > .dev.vars <<'EOF'
+          NEXTJS_ENV=development
+          SHAFILE_RUNTIME=cloudflare
+          TRUST_PROXY=true
+          TICKET_SECRET=ci-ticket-secret-0123456789
+          IP_HASH_SECRET=ci-ip-secret-0123456789
+          CRON_SECRET=ci-cron-secret-0123456789
+          EOF
+
+      - name: Run Worker end-to-end tests
+        env:
+          PLAYWRIGHT_BASE_URL: http://127.0.0.1:8788
+        run: |
+          nohup pnpm exec opennextjs-cloudflare preview -- --port 8788 > wrangler-preview.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:8788/api/health >/dev/null; then
+              pnpm exec playwright test
+              exit $?
+            fi
+            sleep 2
+          done
+          cat wrangler-preview.log
+          exit 1
+
+      - name: Upload Worker logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wrangler-preview-log
+          path: wrangler-preview.log
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Upload Playwright results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cloudflare-playwright-test-results
+          path: test-results
+          if-no-files-found: ignore
+          retention-days: 7
+  deploy-cloudflare:
+    name: Deploy Cloudflare Worker
+    if: github.ref == 'refs/heads/main'
+    needs: [checks, cloudflare]
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    concurrency:
+      group: deploy-cloudflare-production
+      cancel-in-progress: false
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12.9.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Apply D1 migrations
+        run: pnpm exec wrangler d1 migrations apply shafile-db --remote
+
+      - name: Build Cloudflare Worker
+        run: pnpm cf:build
+
+      - name: Deploy Worker
+        run: pnpm exec wrangler deploy --keep-vars
+
+      - name: Smoke test production
+        env:
+          PRODUCTION_URL: ${{ vars.PRODUCTION_URL }}
+        run: |
+          if [ -z "$PRODUCTION_URL" ]; then
+            echo "PRODUCTION_URL repository variable is not set; skipping smoke test."
+            exit 0
+          fi
+          for i in $(seq 1 12); do
+            if curl -fsS "$PRODUCTION_URL/api/health"; then
+              exit 0
+            fi
+            sleep 5
+          done
+          exit 1

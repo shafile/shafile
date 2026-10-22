@@ -30,14 +30,14 @@ export async function POST(
   try {
     assertSameOrigin(request);
     const { id } = await context.params;
-    const limit = consumeRateLimit(
+    const limit = await consumeRateLimit(
       rateLimitKey("access", request, id),
       20,
       5 * 60 * 1000,
     );
     if (!limit.allowed) throw new AppError("RATE_LIMITED", 429);
 
-    const row = requireShare(id);
+    const row = await requireShare(id);
     assertAccessible(row);
 
     const password = getPasswordMeta(row);

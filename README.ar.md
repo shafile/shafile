@@ -4,6 +4,8 @@
 
 [English](README.md) · [简体中文](README.zh-CN.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Русский](README.ru.md) · **العربية** · [Français](README.fr.md) · [Deutsch](README.de.md) · [हिन्दी](README.hi.md) · [Español (México)](README.es-MX.md)
 
+**معاينة مباشرة (Cloudflare Workers):** <https://shafile.laoju.wang>
+
 </center>
 
 ## 1. المقدمة
@@ -69,6 +71,13 @@ docker compose up --build -d
 
 يشغّل GitHub Actions (`.github/workflows/ci.yml`) فحص lint والأنواع وi18n واختبارات الوحدة وبناء الإنتاج واختبارات Playwright E2E وبناء صورة Docker.
 
+### Cloudflare
+
+يوجد مساران للنشر.
+
+- [Cloudflare Tunnel](docs/cloudflare.md): يحافظ على Node.js وSQLite والقرص المحلي والبث والتنظيف.
+- [Workers + D1 + R2](docs/cloudflare-workers.md): بلا خادم بالكامل على Cloudflare، لكنه يخضع لحصص Workers وD1 وR2.
+
 ### متغيرات البيئة
 
 | المتغير | القيمة الافتراضية | الوصف |
@@ -81,6 +90,7 @@ docker compose up --build -d
 | `MAX_SHARE_BYTES` | 5 GiB | الحد الأقصى للملف |
 | `MAX_STORAGE_BYTES` | 50 GiB | حد التخزين الكلي |
 | `TRUST_PROXY` | `false` | اضبطه على `true` خلف وكيل عكسي |
+| `CRON_SECRET` | — | سر Cloudflare لتنظيف داخلي |
 
 ### الأوامر
 
@@ -93,6 +103,9 @@ pnpm typecheck    # TypeScript
 pnpm test         # اختبارات الوحدات
 pnpm test:e2e     # اختبارات Playwright الشاملة
 pnpm i18n:check   # التحقق من مفاتيح الرسائل والعناصر النائبة
+pnpm cf:build     # Cloudflare Worker build
+pnpm cf:preview   # Local D1/R2 preview
+pnpm cf:deploy    # Deploy Worker
 ```
 
 يتطلب Playwright في أول استخدام الأمر `pnpm exec playwright install chromium`. أفضل تجربة لتنزيل الملفات الكبيرة عبر البث في متصفحات Chromium مثل Chrome وEdge. تعود المتصفحات الأخرى إلى فك التشفير في الذاكرة بحد 256 MiB.

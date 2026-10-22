@@ -1,0 +1,6 @@
+NEXTJS_ENV=development
+SHAFILE_RUNTIME=cloudflare
+TRUST_PROXY=true
+TICKET_SECRET=replace-with-a-random-secret
+IP_HASH_SECRET=replace-with-a-random-secret
+CRON_SECRET=replace-with-a-random-secret

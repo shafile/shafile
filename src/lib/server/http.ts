@@ -135,6 +135,10 @@ export function requireBearerToken(request: Request): string {
 }
 
 export function getClientAddress(request: Request): string {
+  const cloudflareIp = request.headers.get("cf-connecting-ip");
+  if (process.env.SHAFILE_RUNTIME === "cloudflare" && cloudflareIp) {
+    return cloudflareIp.trim();
+  }
   if (process.env.TRUST_PROXY === "true") {
     const forwarded = request.headers.get("x-forwarded-for");
     if (forwarded) return forwarded.split(",")[0]!.trim();

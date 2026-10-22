@@ -9,11 +9,13 @@ export async function register() {
   globalForCleanup.__shafileCleanupStarted = true;
 
   const { ensureDataDirs } = await import("./lib/server/config");
+  const { isCloudflareRuntime } = await import("./lib/server/runtime");
   const { getDb } = await import("./lib/server/db");
   const { runCleanup } = await import("./lib/server/shares");
 
+  if (isCloudflareRuntime()) return;
   ensureDataDirs();
-  getDb();
+  await getDb();
   void runCleanup();
 
   const interval = setInterval(() => {

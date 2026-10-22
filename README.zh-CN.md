@@ -4,6 +4,8 @@
 
 [English](README.md) · **简体中文** · [日本語](README.ja.md) · [한국어](README.ko.md) · [Русский](README.ru.md) · [العربية](README.ar.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · [हिन्दी](README.hi.md) · [Español (México)](README.es-MX.md)
 
+**在线预览（Cloudflare Workers 版）：** <https://shafile.laoju.wang>
+
 </center>
 
 ## 1. 介绍
@@ -67,7 +69,14 @@ docker compose up --build -d
 
 ### 持续集成
 
-GitHub Actions（`.github/workflows/ci.yml`）会运行 lint、类型检查、i18n 校验、单元测试、生产构建、Playwright E2E 和 Docker 镜像构建。
+GitHub Actions（`.github/workflows/ci.yml`）会运行 lint、类型检查、i18n 校验、单元测试、生产构建、Playwright E2E、Docker 镜像构建，以及 Cloudflare Worker 构建和本地 D1/R2 E2E。配置 Cloudflare GitHub secrets 后，`main` 分支在检查通过后会自动部署到 Workers。
+
+### Cloudflare
+
+支持两种部署方式：
+
+- [Cloudflare Tunnel](docs/cloudflare.zh-CN.md)：保留 Node.js、SQLite、本地磁盘、流式下载和清理任务，适合完整能力与现有服务器。
+- [Workers + D1 + R2](docs/cloudflare-workers.zh-CN.md)：完全运行在 Cloudflare；功能完整，但受 Workers、D1 和 R2 配额限制（例如 D1 免费 5 GB、R2 免费 10 GB）。
 
 ### 环境变量
 
@@ -81,6 +90,7 @@ GitHub Actions（`.github/workflows/ci.yml`）会运行 lint、类型检查、i1
 | `MAX_SHARE_BYTES`   | 5 GiB                  | 单文件上限            |
 | `MAX_STORAGE_BYTES` | 50 GiB                 | 总存储上限            |
 | `TRUST_PROXY`       | `false`                | 反向代理后设为 `true` |
+| `CRON_SECRET`       | —                      | Cloudflare 内部清理接口鉴权 |
 
 ### 常用命令
 
@@ -93,6 +103,9 @@ pnpm typecheck    # TypeScript
 pnpm test         # 单元测试
 pnpm test:e2e     # Playwright 端到端测试
 pnpm i18n:check   # 词条 key 与占位符校验
+pnpm cf:build     # Cloudflare Worker build
+pnpm cf:preview   # Local D1/R2 preview
+pnpm cf:deploy    # Deploy Worker
 ```
 
 Playwright 首次运行需要 `pnpm exec playwright install chromium`。大文件流式下载以 Chrome/Edge 等 Chromium 浏览器体验最佳；其他浏览器回退到内存解密，上限 256 MiB。

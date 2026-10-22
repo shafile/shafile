@@ -1,13 +1,14 @@
+import { createHash, createHmac, randomBytes } from "node:crypto";
 import {
-  createHash,
-  createHmac,
-  randomBytes,
-  timingSafeEqual,
-} from "node:crypto";
+  base64UrlToBytes,
+  bytesToBase64Url,
+  fromUtf8,
+  utf8,
+} from "@/lib/shared/encoding";
 import { getSecrets } from "./config";
 
 export function createOpaqueToken(bytes = 32): string {
-  return randomBytes(bytes).toString("base64url");
+  return bytesToBase64Url(new Uint8Array(randomBytes(bytes)));
 }
 
 export function hashToken(token: string): Uint8Array {
@@ -19,13 +20,16 @@ export function verifyTokenHash(
   expected: Uint8Array | null,
 ): boolean {
   if (!expected) return false;
-  const actual = hashToken(token);
-  return safeEqual(actual, expected);
+  return safeEqual(hashToken(token), expected);
 }
 
 export function safeEqual(a: Uint8Array, b: Uint8Array): boolean {
   if (a.length !== b.length) return false;
-  return timingSafeEqual(Buffer.from(a), Buffer.from(b));
+  let diff = 0;
+  for (let index = 0; index < a.length; index += 1) {
+    diff |= a[index]! ^ b[index]!;
+  }
+  return diff === 0;
 }
 
 type AccessPayload = {
@@ -40,10 +44,12 @@ export function createAccessToken(shareId: string, now = Date.now()): string {
     sid: shareId,
     exp: now + 10 * 60 * 1000,
   };
-  const encoded = Buffer.from(JSON.stringify(payload)).toString("base64url");
-  const signature = createHmac("sha256", getSecrets().ticketSecret)
-    .update(encoded)
-    .digest("base64url");
+  const encoded = bytesToBase64Url(utf8(JSON.stringify(payload)));
+  const signature = bytesToBase64Url(
+    new Uint8Array(
+      createHmac("sha256", getSecrets().ticketSecret).update(encoded).digest(),
+    ),
+  );
   return `${encoded}.${signature}`;
 }
 
@@ -51,20 +57,20 @@ export function verifyAccessToken(token: string, shareId: string): boolean {
   const [encoded, signature] = token.split(".");
   if (!encoded || !signature) return false;
 
-  const expected = createHmac("sha256", getSecrets().ticketSecret)
-    .update(encoded)
-    .digest();
-  let actual: Buffer;
+  const expected = new Uint8Array(
+    createHmac("sha256", getSecrets().ticketSecret).update(encoded).digest(),
+  );
+  let actual: Uint8Array;
   try {
-    actual = Buffer.from(signature, "base64url");
+    actual = base64UrlToBytes(signature);
   } catch {
     return false;
   }
-  if (!safeEqual(new Uint8Array(actual), new Uint8Array(expected))) return false;
+  if (!safeEqual(actual, expected)) return false;
 
   try {
     const payload = JSON.parse(
-      Buffer.from(encoded, "base64url").toString("utf8"),
+      fromUtf8(base64UrlToBytes(encoded)),
     ) as AccessPayload;
     return (
       payload.v === 1 &&

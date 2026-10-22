@@ -1,10 +1,7 @@
-import { getDb, getShareRow, withTransaction, type ShareRow } from "./db";
+import { getDb, getShareRow, type ShareRow } from "./db";
 import { AppError } from "./http";
 import { verifyTokenHash } from "./tokens";
-import {
-  deleteShareBlobs,
-  deleteUploadTemp,
-} from "./storage";
+import { deleteShareBlobs } from "./storage";
 import {
   BURN_GRACE_MS,
   REVOKED_GRACE_MS,
@@ -17,6 +14,7 @@ import type {
   LookupResult,
 } from "@/lib/shared/types";
 import type { KdfParams } from "@/lib/client/crypto";
+import { bytesToBase64Url } from "@/lib/shared/encoding";
 
 function parseKdf(value: string | null): KdfParams {
   if (!value) {
@@ -46,9 +44,9 @@ export function getPasswordMeta(row: ShareRow): PasswordMeta | null {
     return null;
   }
   return {
-    salt: Buffer.from(row.password_salt).toString("base64url"),
-    wrappedKey: Buffer.from(row.wrapped_key).toString("base64url"),
-    wrapNonce: Buffer.from(row.wrap_nonce).toString("base64url"),
+    salt: bytesToBase64Url(row.password_salt),
+    wrappedKey: bytesToBase64Url(row.wrapped_key),
+    wrapNonce: bytesToBase64Url(row.wrap_nonce),
     kdf: parseKdf(row.kdf_params),
   };
 }
@@ -103,82 +101,96 @@ export function assertAccessible(row: ShareRow, now = Date.now()): void {
   }
 }
 
-export function requireShare(id: string): ShareRow {
-  const row = getShareRow(id);
+export async function requireShare(id: string): Promise<ShareRow> {
+  const row = await getShareRow(id);
   if (!row) throw new AppError("SHARE_NOT_FOUND", 404);
   return row;
 }
 
 type ConsumeResult = { views: number; maxViews: number | null };
 
-export function consumeView(id: string, now = Date.now()): ConsumeResult {
-  return withTransaction(() => {
-    const db = getDb();
-    const burnAt = now + BURN_GRACE_MS;
-    const result = db
-      .prepare(
-        `UPDATE shares
-         SET views = views + 1,
-             burn_at = CASE
-               WHEN max_views IS NOT NULL AND views + 1 >= max_views THEN ?
-               ELSE burn_at
-             END
-         WHERE id = ?
-           AND status = 'ready'
-           AND (start_at IS NULL OR start_at <= ?)
-           AND (expires_at IS NULL OR expires_at > ?)
-           AND (max_views IS NULL OR views < max_views)`,
-      )
-      .run(burnAt, id, now, now);
+export async function consumeView(
+  id: string,
+  now = Date.now(),
+): Promise<ConsumeResult> {
+  const db = await getDb();
+  const burnAt = now + BURN_GRACE_MS;
+  const result = await db.run(
+    `UPDATE shares
+     SET views = views + 1,
+         burn_at = CASE
+           WHEN max_views IS NOT NULL AND views + 1 >= max_views THEN ?
+           ELSE burn_at
+         END
+     WHERE id = ?
+       AND status = 'ready'
+       AND (start_at IS NULL OR start_at <= ?)
+       AND (expires_at IS NULL OR expires_at > ?)
+       AND (max_views IS NULL OR views < max_views)`,
+    [burnAt, id, now, now],
+  );
 
-    if (Number(result.changes) !== 1) {
-      const row = getShareRow(id);
-      if (!row) throw new AppError("SHARE_NOT_FOUND", 404);
-      assertAccessible(row, now);
-      throw new AppError("SHARE_EXHAUSTED", 410);
-    }
-
-    const updated = db
-      .prepare("SELECT views, max_views, burn_at FROM shares WHERE id = ?")
-      .get(id) as { views: number; max_views: number | null; burn_at: number | null };
-    return { views: updated.views, maxViews: updated.max_views };
-  });
-}
-
-const globalForActive = globalThis as unknown as {
-  __shafileActive?: Map<string, number>;
-};
-
-function activeStreams(): Map<string, number> {
-  if (!globalForActive.__shafileActive) {
-    globalForActive.__shafileActive = new Map();
+  if (result.changes !== 1) {
+    const row = await getShareRow(id);
+    if (!row) throw new AppError("SHARE_NOT_FOUND", 404);
+    assertAccessible(row, now);
+    throw new AppError("SHARE_EXHAUSTED", 410);
   }
-  return globalForActive.__shafileActive;
+
+  const updated = await db.get<{
+    views: number;
+    max_views: number | null;
+  }>("SELECT views, max_views FROM shares WHERE id = ?", [id]);
+  if (!updated) throw new AppError("SHARE_NOT_FOUND", 404);
+  return { views: updated.views, maxViews: updated.max_views };
 }
 
-export function beginActiveStream(id: string): void {
-  const map = activeStreams();
-  map.set(id, (map.get(id) ?? 0) + 1);
+export async function beginActiveStream(id: string, now = Date.now()): Promise<void> {
+  const db = await getDb();
+  await db.run(
+    `INSERT INTO active_streams (share_id, count, updated_at)
+     VALUES (?, 1, ?)
+     ON CONFLICT(share_id) DO UPDATE SET
+       count = count + 1,
+       updated_at = excluded.updated_at`,
+    [id, now],
+  );
 }
 
 export async function endActiveStream(id: string): Promise<void> {
-  const map = activeStreams();
-  const next = (map.get(id) ?? 1) - 1;
-  if (next <= 0) map.delete(id);
-  else map.set(id, next);
-  if (next <= 0) {
-    try {
-      await maybePurge(id);
-    } catch (error) {
-      console.error("[shafile] post-download cleanup failed", error);
-    }
+  const db = await getDb();
+  const row = await db.get<{ count: number }>(
+    "SELECT count FROM active_streams WHERE share_id = ?",
+    [id],
+  );
+  if (!row || row.count <= 1) {
+    await db.run("DELETE FROM active_streams WHERE share_id = ?", [id]);
+  } else {
+    await db.run(
+      "UPDATE active_streams SET count = count - 1, updated_at = ? WHERE share_id = ?",
+      [Date.now(), id],
+    );
+  }
+  try {
+    await maybePurge(id);
+  } catch (error) {
+    console.error("[shafile] post-download cleanup failed", error);
   }
 }
 
-export async function maybePurge(id: string): Promise<void> {
-  if ((activeStreams().get(id) ?? 0) > 0) return;
-  const row = getShareRow(id);
-  if (!row) return;
+async function hasActiveStream(id: string): Promise<boolean> {
+  const db = await getDb();
+  const row = await db.get<{ count: number }>(
+    "SELECT count FROM active_streams WHERE share_id = ? AND updated_at > ?",
+    [id, Date.now() - 60 * 60 * 1000],
+  );
+  return Boolean(row && row.count > 0);
+}
+
+export async function maybePurge(id: string): Promise<boolean> {
+  if (await hasActiveStream(id)) return false;
+  const row = await getShareRow(id);
+  if (!row) return false;
   const status = deriveStatus(row);
   if (
     status !== "exhausted" &&
@@ -186,37 +198,45 @@ export async function maybePurge(id: string): Promise<void> {
     status !== "revoked" &&
     status !== "burned"
   ) {
-    return;
+    return false;
   }
 
-  await Promise.all([deleteShareBlobs(id), deleteUploadTemp(id)]);
+  await deleteShareBlobs(id);
   const nextStatus = status === "exhausted" ? "burned" : status;
-  getDb()
-    .prepare("UPDATE shares SET status = ?, blob_bytes = 0 WHERE id = ?")
-    .run(nextStatus, id);
-  getDb().prepare("DELETE FROM uploads WHERE share_id = ?").run(id);
+  const db = await getDb();
+  await db.run(
+    "UPDATE shares SET status = ?, blob_bytes = 0 WHERE id = ?",
+    [nextStatus, id],
+  );
+  await db.run("DELETE FROM upload_parts WHERE upload_id = ?", [id]);
+  await db.run("DELETE FROM uploads WHERE share_id = ?", [id]);
+  await db.run("DELETE FROM active_streams WHERE share_id = ?", [id]);
+  return true;
 }
 
-export function revokeShare(id: string, manageToken: string): ShareRow {
-  return withTransaction(() => {
-    const row = requireShare(id);
-    if (!verifyTokenHash(manageToken, row.manage_token_hash)) {
-      throw new AppError("UNAUTHORIZED", 403);
-    }
-    if (row.status === "revoked") return row;
-    getDb()
-      .prepare("UPDATE shares SET status = 'revoked', revoked_at = ? WHERE id = ?")
-      .run(Date.now(), id);
-    return requireShare(id);
-  });
+export async function revokeShare(
+  id: string,
+  manageToken: string,
+): Promise<ShareRow> {
+  const row = await requireShare(id);
+  if (!verifyTokenHash(manageToken, row.manage_token_hash)) {
+    throw new AppError("UNAUTHORIZED", 403);
+  }
+  if (row.status === "revoked") return row;
+  const db = await getDb();
+  await db.run(
+    "UPDATE shares SET status = 'revoked', revoked_at = ? WHERE id = ?",
+    [Date.now(), id],
+  );
+  return requireShare(id);
 }
 
-export function lookupManaged(
+export async function lookupManaged(
   id: string,
   manageToken: string,
   now = Date.now(),
-): LookupResult | null {
-  const row = getShareRow(id);
+): Promise<LookupResult | null> {
+  const row = await getShareRow(id);
   if (!row) return null;
   if (!verifyTokenHash(manageToken, row.manage_token_hash)) return null;
   return {
@@ -232,17 +252,15 @@ export function lookupManaged(
   };
 }
 
-export function storageUsedBytes(): number {
-  const db = getDb();
-  const ready = db
-    .prepare(
-      "SELECT COALESCE(SUM(blob_bytes), 0) AS total FROM shares WHERE blob_bytes > 0",
-    )
-    .get() as { total: number };
-  const pending = db
-    .prepare("SELECT COALESCE(SUM(bytes), 0) AS total FROM upload_parts")
-    .get() as { total: number };
-  return Number(ready.total) + Number(pending.total);
+export async function storageUsedBytes(): Promise<number> {
+  const db = await getDb();
+  const ready = await db.get<{ total: number }>(
+    "SELECT COALESCE(SUM(blob_bytes), 0) AS total FROM shares WHERE blob_bytes > 0",
+  );
+  const pending = await db.get<{ total: number }>(
+    "SELECT COALESCE(SUM(bytes), 0) AS total FROM upload_parts",
+  );
+  return Number(ready?.total ?? 0) + Number(pending?.total ?? 0);
 }
 
 let cleaning = false;
@@ -251,25 +269,30 @@ export async function runCleanup(now = Date.now()): Promise<void> {
   if (cleaning) return;
   cleaning = true;
   try {
-    const db = getDb();
-    const drafts = db
-      .prepare("SELECT * FROM shares WHERE status = 'draft'")
-      .all() as ShareRow[];
+    const db = await getDb();
+    let budget = 3;
+
+    const drafts = await db.all<ShareRow>(
+      "SELECT * FROM shares WHERE status = 'draft'",
+    );
     for (const row of drafts) {
+      if (budget <= 0) break;
       if (row.created_at + 24 * 60 * 60 * 1000 < now) {
-        await Promise.all([deleteShareBlobs(row.id), deleteUploadTemp(row.id)]);
-        db.prepare("DELETE FROM shares WHERE id = ?").run(row.id);
+        await deleteShareBlobs(row.id);
+        await db.run("DELETE FROM upload_parts WHERE upload_id = ?", [row.id]);
+        await db.run("DELETE FROM uploads WHERE share_id = ?", [row.id]);
+        await db.run("DELETE FROM shares WHERE id = ?", [row.id]);
+        budget -= 1;
       }
     }
 
-    const pending = db
-      .prepare(
-        `SELECT * FROM shares
-         WHERE status IN ('ready', 'revoked', 'expired', 'burned')`,
-      )
-      .all() as ShareRow[];
+    const pending = await db.all<ShareRow>(
+      `SELECT * FROM shares
+       WHERE status IN ('ready', 'revoked', 'expired', 'burned')`,
+    );
 
     for (const row of pending) {
+      if (budget <= 0) break;
       const status = deriveStatus(row, now);
       const shouldPurge =
         status === "expired" ||
@@ -277,15 +300,34 @@ export async function runCleanup(now = Date.now()): Promise<void> {
         (status === "revoked" &&
           (row.revoked_at ?? 0) + REVOKED_GRACE_MS <= now) ||
         status === "burned";
-      if (shouldPurge) await maybePurge(row.id);
+      if (shouldPurge) {
+        const purged = await maybePurge(row.id);
+        budget -= 1;
+        if (purged && row.created_at + TOMBSTONE_TTL_MS <= now) {
+          await deleteShareBlobs(row.id);
+          await db.run("DELETE FROM upload_parts WHERE upload_id = ?", [row.id]);
+          await db.run("DELETE FROM uploads WHERE share_id = ?", [row.id]);
+          await db.run("DELETE FROM shares WHERE id = ?", [row.id]);
+        }
+        continue;
+      }
 
-      const tombstone =
-        status === "expired" || status === "revoked" || status === "burned";
-      if (tombstone && row.created_at + TOMBSTONE_TTL_MS <= now) {
-        await Promise.all([deleteShareBlobs(row.id), deleteUploadTemp(row.id)]);
-        db.prepare("DELETE FROM shares WHERE id = ?").run(row.id);
+      if (status === "revoked" && row.created_at + TOMBSTONE_TTL_MS <= now) {
+        await deleteShareBlobs(row.id);
+        await db.run("DELETE FROM upload_parts WHERE upload_id = ?", [row.id]);
+        await db.run("DELETE FROM uploads WHERE share_id = ?", [row.id]);
+        await db.run("DELETE FROM shares WHERE id = ?", [row.id]);
+        budget -= 1;
       }
     }
+
+    await db.run(
+      "DELETE FROM active_streams WHERE updated_at < ?",
+      [now - 60 * 60 * 1000],
+    );
+    await db.run("DELETE FROM rate_limits WHERE reset_at < ?", [
+      now - 24 * 60 * 60 * 1000,
+    ]);
   } catch (error) {
     console.error("[shafile] cleanup failed", error);
   } finally {

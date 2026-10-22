@@ -26,8 +26,8 @@ export async function PUT(
     }
 
     const token = requireBearerToken(request);
-    const row = requireUploadSession(id, token);
-    const limit = consumeRateLimit(
+    const row = await requireUploadSession(id, token);
+    const limit = await consumeRateLimit(
       rateLimitKey("upload", request, id),
       2000,
       10 * 60 * 1000,

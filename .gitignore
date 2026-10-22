@@ -52,3 +52,10 @@ next-env.d.ts
 /playwright/.cache/
 
 !.env.example
+
+# cloudflare
+/.open-next/
+/.wrangler/
+/.dev.vars
+
+/wrangler-preview.log

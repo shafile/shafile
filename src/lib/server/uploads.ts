@@ -6,27 +6,18 @@ import {
   getMaxStorageBytes,
 } from "@/lib/shared/limits";
 import { readU32be } from "@/lib/shared/encoding";
-import { getDb, getShareRow, withTransaction, type ShareRow } from "./db";
+import { getDb, getShareRow, type ShareRow } from "./db";
 import { AppError } from "./http";
-import {
-  fileExists,
-  fileSize,
-  promoteUpload,
-  tempManifestPath,
-  tempPartPath,
-  writePart,
-  writeTempHeader,
-  writeTempManifest,
-} from "./storage";
+import { writeHeader, writeManifest, writePart } from "./storage";
 import { storageUsedBytes } from "./shares";
 import { verifyTokenHash } from "./tokens";
 
-export function requireUploadSession(
+export async function requireUploadSession(
   shareId: string,
   token: string,
   allowReady = false,
-): ShareRow {
-  const row = getShareRow(shareId);
+): Promise<ShareRow> {
+  const row = await getShareRow(shareId);
   if (!row) throw new AppError("SHARE_NOT_FOUND", 404);
   if (!verifyTokenHash(token, row.upload_token_hash)) {
     throw new AppError("UPLOAD_TOKEN_INVALID", 401);
@@ -58,47 +49,40 @@ export async function savePart(
 
   await writePart(row.id, index, body);
 
-  try {
-    withTransaction(() => {
-      getDb()
-        .prepare(
-          `INSERT INTO upload_parts (upload_id, idx, bytes)
-           VALUES (?, ?, ?)
-           ON CONFLICT(upload_id, idx) DO UPDATE SET bytes = excluded.bytes`,
-        )
-        .run(row.id, index, body.length);
+  const db = await getDb();
+  await db.run(
+    `INSERT INTO upload_parts (upload_id, idx, bytes)
+     VALUES (?, ?, ?)
+     ON CONFLICT(upload_id, idx) DO UPDATE SET bytes = excluded.bytes`,
+    [row.id, index, body.length],
+  );
 
-      const sizes = getDb()
-        .prepare(
-          "SELECT COALESCE(SUM(bytes), 0) AS total FROM upload_parts WHERE upload_id = ?",
-        )
-        .get(row.id) as { total: number };
-
-      const allowance =
-        getMaxFileBytes() + (row.chunk_count ?? 0) * 20 + 4096;
-      if (Number(sizes.total) > allowance) {
-        throw new AppError("FILE_TOO_LARGE", 413);
-      }
-    });
-  } catch (error) {
-    throw error;
+  const sizes = await db.get<{ total: number }>(
+    "SELECT COALESCE(SUM(bytes), 0) AS total FROM upload_parts WHERE upload_id = ?",
+    [row.id],
+  );
+  const allowance = getMaxFileBytes() + (row.chunk_count ?? 0) * 20 + 4096;
+  if (Number(sizes?.total ?? 0) > allowance) {
+    throw new AppError("FILE_TOO_LARGE", 413);
   }
 }
 
-export function uploadedIndices(shareId: string): number[] {
-  const rows = getDb()
-    .prepare("SELECT idx FROM upload_parts WHERE upload_id = ? ORDER BY idx")
-    .all(shareId) as { idx: number }[];
+export async function uploadedIndices(shareId: string): Promise<number[]> {
+  const db = await getDb();
+  const rows = await db.all<{ idx: number }>(
+    "SELECT idx FROM upload_parts WHERE upload_id = ? ORDER BY idx",
+    [shareId],
+  );
   return rows.map((row) => row.idx);
 }
 
-export function uploadStatus(row: ShareRow): {
+export async function uploadStatus(row: ShareRow): Promise<{
   uploaded: number[];
   chunkCount: number;
   ready: boolean;
-} {
+}> {
   return {
-    uploaded: uploadedIndices(row.id),
+    uploaded: await uploadedIndices(row.id),
     chunkCount: row.chunk_count ?? 0,
     ready: row.status === "ready",
   };
@@ -112,12 +96,13 @@ function buildHeader(row: ShareRow): Uint8Array {
   ) {
     throw new AppError("SHARE_NOT_READY", 409);
   }
-  const header = Buffer.alloc(32);
-  header.write("SHF1", 0, "ascii");
-  header.writeUInt32BE(row.chunk_size, 4);
-  Buffer.from(row.nonce_prefix).copy(header, 8);
-  Buffer.from(row.file_id).copy(header, 16);
-  return new Uint8Array(header);
+  const header = new Uint8Array(32);
+  header.set([0x53, 0x48, 0x46, 0x31], 0);
+  const view = new DataView(header.buffer);
+  view.setUint32(4, row.chunk_size, false);
+  header.set(row.nonce_prefix, 8);
+  header.set(row.file_id, 16);
+  return header;
 }
 
 function validateManifestFrame(manifest: Uint8Array): void {
@@ -137,58 +122,53 @@ export async function finalizeUpload(
   row: ShareRow,
   manifest: Uint8Array,
 ): Promise<void> {
-  if (row.status === "ready") {
-    // Finalization is immutable; a retry after a lost response is a no-op.
-    return;
-  }
+  if (row.status === "ready") return;
   if (row.status !== "draft") throw new AppError("SHARE_NOT_READY", 409);
 
   validateManifestFrame(manifest);
   if (row.chunk_count === null) throw new AppError("SHARE_NOT_READY", 409);
 
-  const parts = getDb()
-    .prepare(
-      "SELECT idx, bytes FROM upload_parts WHERE upload_id = ? ORDER BY idx",
-    )
-    .all(row.id) as { idx: number; bytes: number }[];
+  const db = await getDb();
+  const parts = await db.all<{ idx: number; bytes: number }>(
+    "SELECT idx, bytes FROM upload_parts WHERE upload_id = ? ORDER BY idx",
+    [row.id],
+  );
 
   if (parts.length !== row.chunk_count) {
     throw new AppError("UPLOAD_INCOMPLETE", 409);
   }
   for (let index = 0; index < row.chunk_count; index += 1) {
     if (parts[index]?.idx !== index) throw new AppError("UPLOAD_INCOMPLETE", 409);
-    if (!(await fileExists(tempPartPath(row.id, index)))) {
-      throw new AppError("UPLOAD_INCOMPLETE", 409);
-    }
   }
 
-  const header = buildHeader(row);
-  await writeTempHeader(row.id, header);
-  await writeTempManifest(row.id, manifest);
-
-  const manifestBytes = await fileSize(tempManifestPath(row.id));
-  if (manifestBytes === null) throw new AppError("UPLOAD_FAILED", 500);
-
-  if (
-    storageUsedBytes() + 32 + manifestBytes > getMaxStorageBytes()
-  ) {
+  if ((await storageUsedBytes()) + 32 + manifest.length > getMaxStorageBytes()) {
     throw new AppError("STORAGE_FULL", 507);
   }
 
-  await promoteUpload(row.id);
+  const header = buildHeader(row);
+  await writeHeader(row.id, header);
+  await writeManifest(row.id, manifest);
 
   const blobBytes =
-    32 + parts.reduce((sum, part) => sum + Number(part.bytes), 0) + manifestBytes;
+    32 + parts.reduce((sum, part) => sum + Number(part.bytes), 0) + manifest.length;
   const hash = new Uint8Array(
     createHash("sha256").update(manifest).digest(),
   );
 
-  getDb()
-    .prepare(
-      `UPDATE shares
-       SET status = 'ready', manifest_hash = ?, blob_bytes = ?
-       WHERE id = ? AND status = 'draft'`,
-    )
-    .run(hash, blobBytes, row.id);
-  getDb().prepare("DELETE FROM uploads WHERE share_id = ?").run(row.id);
+  await db.batch([
+    {
+      sql: `UPDATE shares
+            SET status = 'ready', manifest_hash = ?, blob_bytes = ?
+            WHERE id = ? AND status = 'draft'`,
+      params: [hash, blobBytes, row.id],
+    },
+    {
+      sql: "DELETE FROM upload_parts WHERE upload_id = ?",
+      params: [row.id],
+    },
+    {
+      sql: "DELETE FROM uploads WHERE share_id = ?",
+      params: [row.id],
+    },
+  ]);
 }

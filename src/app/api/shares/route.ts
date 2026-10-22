@@ -55,7 +55,7 @@ const createSchema = z.discriminatedUnion("kind", [textSchema, fileSchema]);
 export async function POST(request: Request) {
   try {
     assertSameOrigin(request);
-    const limit = consumeRateLimit(
+    const limit = await consumeRateLimit(
       rateLimitKey("create", request),
       20,
       60 * 60 * 1000,
@@ -79,7 +79,7 @@ export async function POST(request: Request) {
       return apiJson({ id: row.id, kind: row.kind, manageToken }, 201);
     }
 
-    const { row, manageToken, uploadToken } = createFileShare({
+    const { row, manageToken, uploadToken } = await createFileShare({
       id: input.id,
       startAt: input.startAt,
       expiresAt: input.expiresAt,

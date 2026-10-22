@@ -88,7 +88,11 @@ function validateCommon(input: {
   }
 
   const now = Date.now();
-  const startAt = Math.max(now, input.startAt ?? now);
+  const requestedStart = input.startAt;
+  const startAt =
+    requestedStart === null || requestedStart <= now + 5000
+      ? now - 5000
+      : requestedStart;
   if (startAt > now + 366 * 24 * 60 * 60 * 1000) {
     throw new AppError("INVALID_SCHEDULE", 400);
   }
@@ -154,7 +158,7 @@ export async function createTextShare(input: TextShareInput): Promise<{
   manageToken: string;
 }> {
   const common = validateCommon(input);
-  if (getShareRow(input.id)) {
+  if (await getShareRow(input.id)) {
     throw new AppError("SHARE_ID_CONFLICT", 409);
   }
 
@@ -168,53 +172,53 @@ export async function createTextShare(input: TextShareInput): Promise<{
   if (payload.length > MAX_TEXT_BYTES + 64) {
     throw new AppError("TEXT_TOO_LARGE", 413);
   }
-  if (storageUsedBytes() + payload.length > getMaxStorageBytes()) {
+  if ((await storageUsedBytes()) + payload.length > getMaxStorageBytes()) {
     throw new AppError("STORAGE_FULL", 507);
   }
 
   const manageToken = createOpaqueToken();
   const now = Date.now();
-  const db = getDb();
+  const db = await getDb();
 
   await writeTextBlob(input.id, payload);
 
   try {
-    db.prepare(
+    await db.run(
       `INSERT INTO shares (
         id, kind, status, created_at, start_at, expires_at, max_views, views,
         password_salt, password_verifier, wrapped_key, wrap_nonce, kdf_params,
         manage_token_hash, blob_bytes
       ) VALUES (?, 'text', 'ready', ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?)`,
-    ).run(
-      input.id,
-      now,
-      common.startAt,
-      common.expiresAt,
-      common.maxViews,
-      common.passwordSalt,
-      common.passwordVerifier,
-      common.wrappedKey,
-      common.wrapNonce,
-      common.kdfJson,
-      hashToken(manageToken),
-      payload.length,
+      [
+        input.id,
+        now,
+        common.startAt,
+        common.expiresAt,
+        common.maxViews,
+        common.passwordSalt,
+        common.passwordVerifier,
+        common.wrappedKey,
+        common.wrapNonce,
+        common.kdfJson,
+        hashToken(manageToken),
+        payload.length,
+      ],
     );
   } catch (error) {
-    // Do not delete a blob if another request won the id race.
-    if (!getShareRow(input.id)) await deleteShareBlobs(input.id);
+    if (!(await getShareRow(input.id))) await deleteShareBlobs(input.id);
     throw error;
   }
 
-  return { row: getShareRow(input.id)!, manageToken };
+  return { row: (await getShareRow(input.id))!, manageToken };
 }
 
-export function createFileShare(input: FileShareInput): {
+export async function createFileShare(input: FileShareInput): Promise<{
   row: ShareRow;
   manageToken: string;
   uploadToken: string;
-} {
+}> {
   const common = validateCommon(input);
-  if (getShareRow(input.id)) {
+  if (await getShareRow(input.id)) {
     throw new AppError("SHARE_ID_CONFLICT", 409);
   }
   if (!Number.isInteger(input.chunkSize) || input.chunkSize !== CHUNK_SIZE) {
@@ -244,37 +248,44 @@ export function createFileShare(input: FileShareInput): {
   const manageToken = createOpaqueToken();
   const uploadToken = createOpaqueToken();
   const now = Date.now();
-  const db = getDb();
+  const db = await getDb();
 
-  db.prepare(
-    `INSERT INTO shares (
-      id, kind, status, created_at, start_at, expires_at, max_views, views,
-      chunk_size, chunk_count, nonce_prefix, file_id,
-      password_salt, password_verifier, wrapped_key, wrap_nonce, kdf_params,
-      manage_token_hash, upload_token_hash, blob_bytes
-    ) VALUES (?, 'file', 'draft', ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`,
-  ).run(
-    input.id,
-    now,
-    common.startAt,
-    common.expiresAt,
-    common.maxViews,
-    input.chunkSize,
-    input.chunkCount,
-    noncePrefix,
-    fileId,
-    common.passwordSalt,
-    common.passwordVerifier,
-    common.wrappedKey,
-    common.wrapNonce,
-    common.kdfJson,
-    hashToken(manageToken),
-    hashToken(uploadToken),
-  );
+  await db.batch([
+    {
+      sql: `INSERT INTO shares (
+        id, kind, status, created_at, start_at, expires_at, max_views, views,
+        chunk_size, chunk_count, nonce_prefix, file_id,
+        password_salt, password_verifier, wrapped_key, wrap_nonce, kdf_params,
+        manage_token_hash, upload_token_hash, blob_bytes
+      ) VALUES (?, 'file', 'draft', ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`,
+      params: [
+        input.id,
+        now,
+        common.startAt,
+        common.expiresAt,
+        common.maxViews,
+        input.chunkSize,
+        input.chunkCount,
+        noncePrefix,
+        fileId,
+        common.passwordSalt,
+        common.passwordVerifier,
+        common.wrappedKey,
+        common.wrapNonce,
+        common.kdfJson,
+        hashToken(manageToken),
+        hashToken(uploadToken),
+      ],
+    },
+    {
+      sql: "INSERT INTO uploads (share_id, created_at, expires_at) VALUES (?, ?, ?)",
+      params: [input.id, now, now + 24 * 60 * 60 * 1000],
+    },
+  ]);
 
-  db.prepare(
-    "INSERT INTO uploads (share_id, created_at, expires_at) VALUES (?, ?, ?)",
-  ).run(input.id, now, now + 24 * 60 * 60 * 1000);
-
-  return { row: getShareRow(input.id)!, manageToken, uploadToken };
+  return {
+    row: (await getShareRow(input.id))!,
+    manageToken,
+    uploadToken,
+  };
 }

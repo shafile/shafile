@@ -83,7 +83,7 @@ type PendingUpload = {
   contentKeyHandle: CryptoKey;
   noncePrefix: Uint8Array;
   headerHash: Uint8Array;
-  startAt: number;
+  startAt: number | null;
   expiresAt: number | null;
   maxViews: number | null;
   hasPassword: boolean;
@@ -182,27 +182,28 @@ export function CreateForm({ maxFileBytes }: { maxFileBytes: number }) {
   }
 
   function resolveSchedule(): {
-    startAt: number;
+    startAt: number | null;
     expiresAt: number | null;
     maxViews: number | null;
   } {
     const now = Date.now();
-    let startAt = now;
+    let startAt: number | null = null;
     if (startMode === "scheduled") {
       startAt = parseLocalInput(startAtValue);
       if (!startAt || startAt <= now) {
         throw new ApiClientError("INVALID_SCHEDULE");
       }
     }
+    const scheduleBase = startAt ?? now;
 
     let expiresAt: number | null = null;
-    if (expiryMode === "1h") expiresAt = startAt + 60 * 60 * 1000;
-    else if (expiryMode === "24h") expiresAt = startAt + 24 * 60 * 60 * 1000;
-    else if (expiryMode === "7d") expiresAt = startAt + 7 * 24 * 60 * 60 * 1000;
-    else if (expiryMode === "30d") expiresAt = startAt + 30 * 24 * 60 * 60 * 1000;
+    if (expiryMode === "1h") expiresAt = scheduleBase + 60 * 60 * 1000;
+    else if (expiryMode === "24h") expiresAt = scheduleBase + 24 * 60 * 60 * 1000;
+    else if (expiryMode === "7d") expiresAt = scheduleBase + 7 * 24 * 60 * 60 * 1000;
+    else if (expiryMode === "30d") expiresAt = scheduleBase + 30 * 24 * 60 * 60 * 1000;
     else if (expiryMode === "custom") {
       expiresAt = parseLocalInput(expiryValue);
-      if (!expiresAt || expiresAt <= Math.max(now, startAt)) {
+      if (!expiresAt || expiresAt <= Math.max(now, scheduleBase)) {
         throw new ApiClientError("INVALID_SCHEDULE");
       }
     }
@@ -239,7 +240,7 @@ export function CreateForm({ maxFileBytes }: { maxFileBytes: number }) {
     hasPassword: boolean,
     maxViews: number | null,
     expiresAt: number | null,
-    startAt: number,
+    startAt: number | null,
   ): ResultState {
     const origin = window.location.origin;
     const link = hasPassword
@@ -251,7 +252,7 @@ export function CreateForm({ maxFileBytes }: { maxFileBytes: number }) {
       kind,
       manageToken,
       link,
-      status: startAt > Date.now() ? "scheduled" : "ready",
+      status: startAt !== null && startAt > Date.now() ? "scheduled" : "ready",
       createdAt: Date.now(),
       startAt,
       expiresAt,

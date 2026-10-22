@@ -6,6 +6,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 let root: string;
 let getDb: typeof import("./db").getDb;
 let getShareRow: typeof import("./db").getShareRow;
+let closeDbForTests: typeof import("./db").closeDbForTests;
 let runCleanup: typeof import("./shares").runCleanup;
 
 const expiredId = "A".repeat(22);
@@ -19,35 +20,37 @@ beforeAll(async () => {
   vi.stubEnv("IP_HASH_SECRET", "test-ip-secret");
   vi.resetModules();
 
-  ({ getDb, getShareRow } = await import("./db"));
+  ({ getDb, getShareRow, closeDbForTests } = await import("./db"));
   ({ runCleanup } = await import("./shares"));
 
-  const db = getDb();
-  db.prepare(
+  const db = await getDb();
+  await db.run(
     `INSERT INTO shares (
       id, kind, status, created_at, start_at, expires_at, views,
       manage_token_hash, blob_bytes
     ) VALUES (?, 'file', 'ready', ?, ?, ?, 0, ?, ?)`,
-  ).run(
-    expiredId,
-    now - 2 * 60 * 60 * 1000,
-    now - 2 * 60 * 60 * 1000,
-    now - 1000,
-    new Uint8Array(32),
-    1024,
+    [
+      expiredId,
+      now - 2 * 60 * 60 * 1000,
+      now - 2 * 60 * 60 * 1000,
+      now - 1000,
+      new Uint8Array(32),
+      1024,
+    ],
   );
-  db.prepare(
+  await db.run(
     `INSERT INTO shares (
       id, kind, status, created_at, start_at, expires_at, views,
       manage_token_hash, blob_bytes
     ) VALUES (?, 'file', 'ready', ?, ?, ?, 0, ?, ?)`,
-  ).run(
-    activeId,
-    now - 1000,
-    now - 1000,
-    now + 60 * 60 * 1000,
-    new Uint8Array(32),
-    2048,
+    [
+      activeId,
+      now - 1000,
+      now - 1000,
+      now + 60 * 60 * 1000,
+      new Uint8Array(32),
+      2048,
+    ],
   );
 
   await mkdir(join(root, "blobs", expiredId, "parts"), { recursive: true });
@@ -57,7 +60,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  getDb().close();
+  await closeDbForTests();
   vi.unstubAllEnvs();
   await rm(root, { recursive: true, force: true }).catch(() => undefined);
 });
@@ -66,14 +69,14 @@ describe("expired share cleanup", () => {
   it("deletes the ciphertext of expired files during the cleanup sweep", async () => {
     await runCleanup(now);
 
-    const expired = getShareRow(expiredId);
+    const expired = await getShareRow(expiredId);
     expect(expired?.status).toBe("expired");
     expect(expired?.blob_bytes).toBe(0);
     await expect(stat(join(root, "blobs", expiredId))).rejects.toMatchObject({
       code: "ENOENT",
     });
 
-    const active = getShareRow(activeId);
+    const active = await getShareRow(activeId);
     expect(active?.status).toBe("ready");
     expect(active?.blob_bytes).toBe(2048);
     await expect(stat(join(root, "blobs", activeId, "header.bin"))).resolves.toBeTruthy();

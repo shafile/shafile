@@ -1,19 +1,7 @@
 import { createHmac } from "node:crypto";
+import { getDb } from "./db";
 import { getSecrets } from "./config";
 import { getClientAddress } from "./http";
-
-type Bucket = { count: number; resetAt: number };
-
-const globalForRateLimit = globalThis as unknown as {
-  __shafileRateLimit?: Map<string, Bucket>;
-};
-
-function buckets(): Map<string, Bucket> {
-  if (!globalForRateLimit.__shafileRateLimit) {
-    globalForRateLimit.__shafileRateLimit = new Map();
-  }
-  return globalForRateLimit.__shafileRateLimit;
-}
 
 export function hashAddress(request: Request): string {
   return createHmac("sha256", getSecrets().ipHashSecret)
@@ -30,32 +18,30 @@ export function rateLimitKey(
   return `${scope}:${hashAddress(request)}${suffix ? `:${suffix}` : ""}`;
 }
 
-export function consumeRateLimit(
+export async function consumeRateLimit(
   key: string,
   limit: number,
   windowMs: number,
   now = Date.now(),
-): { allowed: boolean; retryAfterSeconds: number } {
-  const store = buckets();
-  if (store.size > 20_000) {
-    for (const [entryKey, bucket] of store) {
-      if (bucket.resetAt <= now) store.delete(entryKey);
-    }
-  }
+): Promise<{ allowed: boolean; retryAfterSeconds: number }> {
+  const resetAt = now + windowMs;
+  const db = await getDb();
+  const row = await db.get<{ count: number; reset_at: number }>(
+    `INSERT INTO rate_limits (key, count, reset_at)
+     VALUES (?, 1, ?)
+     ON CONFLICT(key) DO UPDATE SET
+       count = CASE WHEN rate_limits.reset_at <= ? THEN 1 ELSE rate_limits.count + 1 END,
+       reset_at = CASE WHEN rate_limits.reset_at <= ? THEN excluded.reset_at ELSE rate_limits.reset_at END
+     RETURNING count, reset_at`,
+    [key, resetAt, now, now],
+  );
 
-  const existing = store.get(key);
-  if (!existing || existing.resetAt <= now) {
-    store.set(key, { count: 1, resetAt: now + windowMs });
+  if (!row || row.count <= limit) {
     return { allowed: true, retryAfterSeconds: 0 };
   }
 
-  if (existing.count >= limit) {
-    return {
-      allowed: false,
-      retryAfterSeconds: Math.max(1, Math.ceil((existing.resetAt - now) / 1000)),
-    };
-  }
-
-  existing.count += 1;
-  return { allowed: true, retryAfterSeconds: 0 };
+  return {
+    allowed: false,
+    retryAfterSeconds: Math.max(1, Math.ceil((row.reset_at - now) / 1000)),
+  };
 }

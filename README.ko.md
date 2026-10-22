@@ -4,6 +4,8 @@
 
 [English](README.md) · [简体中文](README.zh-CN.md) · [日本語](README.ja.md) · **한국어** · [Русский](README.ru.md) · [العربية](README.ar.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · [हिन्दी](README.hi.md) · [Español (México)](README.es-MX.md)
 
+**라이브 미리보기(Cloudflare Workers 버전):** <https://shafile.laoju.wang>
+
 </center>
 
 ## 1. 소개
@@ -69,6 +71,13 @@ docker compose up --build -d
 
 GitHub Actions(`.github/workflows/ci.yml`)는 lint, 타입 검사, i18n 검사, 단위 테스트, 프로덕션 빌드, Playwright E2E, Docker 이미지 빌드를 실행합니다.
 
+### Cloudflare
+
+두 가지 배포 방식을 지원합니다.
+
+- [Cloudflare Tunnel](docs/cloudflare.md): Node.js, SQLite, 로컬 디스크, 스트리밍, 정리를 유지합니다.
+- [Workers + D1 + R2](docs/cloudflare-workers.md): Cloudflare에서 완전 서버리스로 동작하지만 Workers, D1, R2 할당량 제한을 받습니다.
+
 ### 환경 변수
 
 | 변수 | 기본값 | 설명 |
@@ -81,6 +90,7 @@ GitHub Actions(`.github/workflows/ci.yml`)는 lint, 타입 검사, i18n 검사, 
 | `MAX_SHARE_BYTES` | 5 GiB | 파일당 제한 |
 | `MAX_STORAGE_BYTES` | 50 GiB | 전체 저장 공간 제한 |
 | `TRUST_PROXY` | `false` | 리버스 프록시 뒤에서는 `true` |
+| `CRON_SECRET` | — | Cloudflare 내부 정리 작업 인증 |
 
 ### 명령어
 
@@ -93,6 +103,9 @@ pnpm typecheck    # TypeScript
 pnpm test         # 단위 테스트
 pnpm test:e2e     # Playwright E2E 테스트
 pnpm i18n:check   # 메시지 키와 플레이스홀더 검사
+pnpm cf:build     # Cloudflare Worker build
+pnpm cf:preview   # Local D1/R2 preview
+pnpm cf:deploy    # Deploy Worker
 ```
 
 Playwright를 처음 실행하려면 `pnpm exec playwright install chromium`이 필요합니다. 큰 파일의 스트리밍 다운로드는 Chrome, Edge 등 Chromium 브라우저에서 가장 좋습니다. 다른 브라우저는 메모리 내 복호화로 대체하며 제한은 256 MiB입니다.

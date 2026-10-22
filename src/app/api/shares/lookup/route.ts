@@ -26,7 +26,7 @@ const schema = z.object({
 export async function POST(request: Request) {
   try {
     assertSameOrigin(request);
-    const limit = consumeRateLimit(
+    const limit = await consumeRateLimit(
       rateLimitKey("lookup", request),
       30,
       60 * 1000,
@@ -36,9 +36,13 @@ export async function POST(request: Request) {
     const parsed = schema.safeParse(await readJsonLimited(request, 32 * 1024));
     if (!parsed.success) throw new AppError("INVALID_REQUEST", 400);
 
-    const items = parsed.data.items
-      .map((item) => lookupManaged(item.id, item.manageToken))
-      .filter((item): item is NonNullable<typeof item> => item !== null);
+    const items = (
+      await Promise.all(
+        parsed.data.items.map((item) =>
+          lookupManaged(item.id, item.manageToken),
+        ),
+      )
+    ).filter((item): item is NonNullable<typeof item> => item !== null);
 
     return apiJson({ items, serverNow: Date.now() });
   } catch (error) {

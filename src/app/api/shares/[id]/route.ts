@@ -11,14 +11,14 @@ export async function GET(
 ) {
   try {
     const { id } = await context.params;
-    const limit = consumeRateLimit(
+    const limit = await consumeRateLimit(
       rateLimitKey("meta", request, id),
       120,
       60 * 1000,
     );
     if (!limit.allowed) throw new AppError("RATE_LIMITED", 429);
 
-    const row = requireShare(id);
+    const row = await requireShare(id);
     const meta = toShareMeta(row);
     if (meta.status === "expired") {
       await maybePurge(id).catch((error) => {

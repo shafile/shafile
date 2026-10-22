@@ -6,7 +6,8 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    getDb().prepare("SELECT 1 AS ok").get();
+    const db = await getDb();
+    await db.get("SELECT 1 AS ok");
     return apiJson({ ok: true, time: Date.now() });
   } catch (error) {
     return routeError(error);

@@ -1,5 +1,10 @@
+nodeLinker: hoisted
 allowBuilds:
   sharp: false
   unrs-resolver: false
   "@swc/core": true
   "@parcel/watcher": true
+  esbuild: true
+  workerd: true
+minimumReleaseAgeExclude:
+  - "@opennextjs/cloudflare@1.20.13"

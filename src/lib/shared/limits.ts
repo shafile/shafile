@@ -19,7 +19,8 @@ export function getMaxFileBytes(): number {
 
 export function getMaxStorageBytes(): number {
   const parsed = Number(process.env.MAX_STORAGE_BYTES ?? "");
-  return Number.isFinite(parsed) && parsed > 0
-    ? parsed
+  if (Number.isFinite(parsed) && parsed > 0) return parsed;
+  return process.env.SHAFILE_RUNTIME === "cloudflare"
+    ? 9 * 1024 * 1024 * 1024
     : 50 * 1024 * 1024 * 1024;
 }

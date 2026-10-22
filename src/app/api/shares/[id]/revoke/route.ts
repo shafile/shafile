@@ -23,7 +23,7 @@ export async function POST(
   try {
     assertSameOrigin(request);
     const { id } = await context.params;
-    const limit = consumeRateLimit(
+    const limit = await consumeRateLimit(
       rateLimitKey("revoke", request, id),
       10,
       10 * 60 * 1000,
@@ -33,7 +33,7 @@ export async function POST(
     const parsed = schema.safeParse(await readJsonLimited(request, 4096));
     if (!parsed.success) throw new AppError("INVALID_REQUEST", 400);
 
-    revokeShare(id, parsed.data.manageToken);
+    await revokeShare(id, parsed.data.manageToken);
     try {
       await maybePurge(id);
     } catch (error) {

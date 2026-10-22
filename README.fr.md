@@ -4,6 +4,8 @@
 
 [English](README.md) · [简体中文](README.zh-CN.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Русский](README.ru.md) · [العربية](README.ar.md) · **Français** · [Deutsch](README.de.md) · [हिन्दी](README.hi.md) · [Español (México)](README.es-MX.md)
 
+**Aperçu en ligne (Cloudflare Workers) :** <https://shafile.laoju.wang>
+
 </center>
 
 ## 1. Introduction
@@ -69,6 +71,13 @@ L’application est disponible sur `http://localhost:3000`. Les données sont co
 
 GitHub Actions (`.github/workflows/ci.yml`) exécute lint, vérification des types, vérification i18n, tests unitaires, build de production, tests E2E Playwright et build de l’image Docker.
 
+### Cloudflare
+
+Deux modes de déploiement sont pris en charge.
+
+- [Cloudflare Tunnel](docs/cloudflare.md) : conserve Node.js, SQLite, le disque local, le streaming et le nettoyage.
+- [Workers + D1 + R2](docs/cloudflare-workers.md) : entièrement serverless sur Cloudflare, avec les quotas Workers, D1 et R2.
+
 ### Variables d’environnement
 
 | Variable | Valeur par défaut | Description |
@@ -81,6 +90,7 @@ GitHub Actions (`.github/workflows/ci.yml`) exécute lint, vérification des typ
 | `MAX_SHARE_BYTES` | 5 GiB | Limite par fichier |
 | `MAX_STORAGE_BYTES` | 50 GiB | Limite de stockage totale |
 | `TRUST_PROXY` | `false` | `true` derrière un reverse proxy |
+| `CRON_SECRET` | — | Secret de nettoyage interne Cloudflare |
 
 ### Commandes
 
@@ -93,6 +103,9 @@ pnpm typecheck    # TypeScript
 pnpm test         # Tests unitaires
 pnpm test:e2e     # Tests E2E Playwright
 pnpm i18n:check   # Vérification des clés et placeholders
+pnpm cf:build     # Cloudflare Worker build
+pnpm cf:preview   # Local D1/R2 preview
+pnpm cf:deploy    # Deploy Worker
 ```
 
 Playwright nécessite `pnpm exec playwright install chromium` au premier lancement. Le téléchargement en streaming des gros fichiers est optimal dans les navigateurs Chromium comme Chrome et Edge. Les autres navigateurs utilisent un déchiffrement en mémoire limité à 256 MiB.

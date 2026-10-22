@@ -1,25 +1,45 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { randomBytes } from "node:crypto";
 import { join, resolve } from "node:path";
+import { isCloudflareRuntime } from "./runtime";
 
-const dataDir = process.env.SHAFILE_DATA_DIR
-  ? resolve(/* turbopackIgnore: true */ process.env.SHAFILE_DATA_DIR)
-  : join(process.cwd(), "data");
+const dataDir = isCloudflareRuntime()
+  ? "/tmp/shafile"
+  : process.env.SHAFILE_DATA_DIR
+    ? resolve(/* turbopackIgnore: true */ process.env.SHAFILE_DATA_DIR)
+    : join(process.cwd(), "data");
 
 export const serverConfig = {
   dataDir,
-  dbPath: process.env.DATABASE_PATH
-    ? resolve(/* turbopackIgnore: true */ process.env.DATABASE_PATH)
-    : join(dataDir, "shafile.db"),
-  blobDir: process.env.BLOB_DIR
-    ? resolve(/* turbopackIgnore: true */ process.env.BLOB_DIR)
-    : join(dataDir, "blobs"),
+  dbPath: isCloudflareRuntime()
+    ? join(dataDir, "shafile.db")
+    : process.env.DATABASE_PATH
+      ? resolve(/* turbopackIgnore: true */ process.env.DATABASE_PATH)
+      : join(dataDir, "shafile.db"),
+  blobDir: isCloudflareRuntime()
+    ? join(dataDir, "blobs")
+    : process.env.BLOB_DIR
+      ? resolve(/* turbopackIgnore: true */ process.env.BLOB_DIR)
+      : join(dataDir, "blobs"),
   tmpDir: join(dataDir, "tmp"),
   trustProxy: process.env.TRUST_PROXY === "true",
 };
 
+type NodeFs = typeof import("node:fs");
+
+function nodeFs(): NodeFs {
+  const fs = process.getBuiltinModule("node:fs") as NodeFs | undefined;
+  if (!fs) throw new Error("node:fs is unavailable");
+  return fs;
+}
+
 export function ensureDataDirs(): void {
-  for (const directory of [serverConfig.dataDir, serverConfig.blobDir, serverConfig.tmpDir]) {
+  if (isCloudflareRuntime()) return;
+  const { mkdirSync } = nodeFs();
+  for (const directory of [
+    serverConfig.dataDir,
+    serverConfig.blobDir,
+    serverConfig.tmpDir,
+  ]) {
     mkdirSync(directory, { recursive: true });
   }
 }
@@ -46,7 +66,12 @@ export function getSecrets(): Secrets {
     return globalForSecrets.__shafileSecrets;
   }
 
+  if (isCloudflareRuntime()) {
+    throw new Error("TICKET_SECRET and IP_HASH_SECRET are required on Cloudflare");
+  }
+
   ensureDataDirs();
+  const { existsSync, readFileSync, writeFileSync } = nodeFs();
   const secretPath = join(serverConfig.dataDir, ".secrets.json");
   let fileSecrets: Partial<Secrets> = {};
   if (existsSync(secretPath)) {

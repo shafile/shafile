@@ -4,6 +4,8 @@
 
 **English** · [简体中文](README.zh-CN.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Русский](README.ru.md) · [العربية](README.ar.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · [हिन्दी](README.hi.md) · [Español (México)](README.es-MX.md)
 
+**Live preview (Cloudflare Workers):** <https://shafile.laoju.wang>
+
 </center>
 
 ## 1. Introduction
@@ -67,7 +69,14 @@ The app is available at `http://localhost:3000`. Data persists in the `shafile-d
 
 ### CI
 
-GitHub Actions (`.github/workflows/ci.yml`) runs lint, type checking, i18n checks, unit tests, the production build, Playwright E2E tests, and a Docker image build.
+GitHub Actions (`.github/workflows/ci.yml`) runs lint, type checking, i18n checks, unit tests, the production build, Node Playwright E2E tests, a Docker image build, and a Cloudflare Worker build plus Playwright E2E against local D1/R2. After these pass, pushes to `main` auto-deploy to Workers when the Cloudflare GitHub secrets are configured.
+
+### Cloudflare
+
+Two supported paths:
+
+- [Cloudflare Tunnel](docs/cloudflare.md): keep Node.js, SQLite, local disk, streaming, and cleanup. Best for full capability and existing servers.
+- [Workers + D1 + R2](docs/cloudflare-workers.md): fully serverless on Cloudflare; feature-complete but subject to Workers, D1, and R2 quotas (for example D1 Free 5 GB and R2 Free 10 GB).
 
 ### Environment variables
 
@@ -81,6 +90,7 @@ GitHub Actions (`.github/workflows/ci.yml`) runs lint, type checking, i18n check
 | `MAX_SHARE_BYTES` | 5 GiB | Per-file limit |
 | `MAX_STORAGE_BYTES` | 50 GiB | Total storage limit |
 | `TRUST_PROXY` | `false` | Set to `true` behind a reverse proxy |
+| `CRON_SECRET` | — | Cloudflare internal cleanup bearer secret |
 
 ### Commands
 
@@ -93,6 +103,9 @@ pnpm typecheck    # TypeScript
 pnpm test         # Unit tests
 pnpm test:e2e     # Playwright end-to-end tests
 pnpm i18n:check   # Message key and placeholder checks
+pnpm cf:build     # Cloudflare Worker build
+pnpm cf:preview   # Local D1/R2 preview
+pnpm cf:deploy    # Deploy Worker
 ```
 
 Playwright requires `pnpm exec playwright install chromium` on first use. Large-file streaming downloads work best in Chromium browsers such as Chrome and Edge. Other browsers fall back to in-memory decryption with a 256 MiB limit.

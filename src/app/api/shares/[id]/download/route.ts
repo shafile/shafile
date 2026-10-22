@@ -1,4 +1,3 @@
-import { Readable } from "node:stream";
 import { requireAccessToken } from "@/lib/server/auth";
 import { AppError, routeError } from "@/lib/server/http";
 import { consumeRateLimit, rateLimitKey } from "@/lib/server/rate-limit";
@@ -9,33 +8,45 @@ import {
   endActiveStream,
   requireShare,
 } from "@/lib/server/shares";
-import {
-  createBlobReadStream,
-  fileExists,
-  headerBlobPath,
-  manifestBlobPath,
-  partBlobPath,
-} from "@/lib/server/storage";
+import { fileExists, streamShareBlob } from "@/lib/server/storage";
+import { keepAlive } from "@/lib/server/runtime";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-async function* streamBlob(id: string, chunkCount: number) {
-  try {
-    const paths = [
-      headerBlobPath(id),
-      ...Array.from({ length: chunkCount }, (_, index) => partBlobPath(id, index)),
-      manifestBlobPath(id),
-    ];
-    for (const path of paths) {
-      const stream = createBlobReadStream(path);
-      for await (const chunk of stream) {
-        yield chunk as Buffer;
-      }
-    }
-  } finally {
-    await endActiveStream(id);
+function streamWithCleanup(
+  source: ReadableStream<Uint8Array>,
+  id: string,
+): ReadableStream<Uint8Array> {
+  const reader = source.getReader();
+  let finished = false;
+
+  async function finish() {
+    if (finished) return;
+    finished = true;
+    await keepAlive(endActiveStream(id));
   }
+
+  return new ReadableStream<Uint8Array>({
+    async pull(controller) {
+      try {
+        const next = await reader.read();
+        if (next.done) {
+          controller.close();
+          await finish();
+        } else {
+          controller.enqueue(next.value);
+        }
+      } catch (error) {
+        controller.error(error);
+        await finish();
+      }
+    },
+    async cancel() {
+      await reader.cancel().catch(() => undefined);
+      await finish();
+    },
+  });
 }
 
 export async function GET(
@@ -44,7 +55,7 @@ export async function GET(
 ) {
   try {
     const { id } = await context.params;
-    const limit = consumeRateLimit(
+    const limit = await consumeRateLimit(
       rateLimitKey("download", request, id),
       10,
       60 * 1000,
@@ -52,33 +63,27 @@ export async function GET(
     if (!limit.allowed) throw new AppError("RATE_LIMITED", 429);
 
     requireAccessToken(request, id);
-    const row = requireShare(id);
+    const row = await requireShare(id);
     if (row.kind !== "file") throw new AppError("INVALID_REQUEST", 400);
     assertAccessible(row);
 
     const chunkCount = row.chunk_count ?? 0;
-    const required = [
-      headerBlobPath(id),
-      manifestBlobPath(id),
-      ...Array.from({ length: chunkCount }, (_, index) => partBlobPath(id, index)),
-    ];
-    for (const path of required) {
-      if (!(await fileExists(path))) throw new AppError("FILE_MISSING", 410);
+    if (
+      !(await fileExists(id, "header")) ||
+      !(await fileExists(id, "manifest"))
+    ) {
+      throw new AppError("FILE_MISSING", 410);
     }
-
-    beginActiveStream(id);
-
+    await beginActiveStream(id);
     try {
-      const consumed = consumeView(id);
-      const body = Readable.toWeb(
-        Readable.from(streamBlob(id, chunkCount)),
-      ) as ReadableStream;
+      const consumed = await consumeView(id);
+      const source = await streamShareBlob(id, chunkCount);
       const remaining =
         consumed.maxViews === null
           ? "unlimited"
           : String(Math.max(0, consumed.maxViews - consumed.views));
 
-      return new Response(body, {
+      return new Response(streamWithCleanup(source, id), {
         status: 200,
         headers: {
           "Content-Type": "application/octet-stream",
