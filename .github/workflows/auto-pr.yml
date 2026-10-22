@@ -34,6 +34,12 @@ jobs:
           fi
 
           git fetch origin develop --quiet
+          commits=$(git rev-list --count origin/develop..HEAD)
+          if [ "$commits" -eq 0 ]; then
+            echo "No commits between develop and $BRANCH; skipping pull request."
+            exit 0
+          fi
+
           title=$(git log --reverse --pretty=%s origin/develop..HEAD | head -n 1)
           body=$(git log --reverse --pretty=%b origin/develop..HEAD | head -n 1)
 
