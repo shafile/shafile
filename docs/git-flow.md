@@ -49,6 +49,13 @@ BREAKING CHANGE: existing ciphertext must be re-encrypted.
 5. 发布时创建 `release/<version>`，合并到 `main` 后打 SemVer 标签，例如 `v0.2.0`。
 6. 紧急修复从 `main` 创建 `hotfix/<version>`，完成后同时合回 `main` 与 `develop`。
 
+## 自动 PR
+
+- 推送 `feature/**` 分支会触发 `.github/workflows/auto-pr.yml`
+- 工作流使用仓库的 `GITHUB_TOKEN` 向 `main` 自动创建 Pull Request；已有打开的 PR 时跳过
+- PR 标题和正文来自该分支最早的功能提交，保持英文
+- `GITHUB_TOKEN` 创建的 PR 不会触发 `pull_request` 工作流，因此 CI 同时监听 `feature/**` 的 push
+
 ## 约束
 
 - 不直接向 `main` 推送，首个初始化提交除外。
