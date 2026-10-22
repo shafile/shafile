@@ -176,7 +176,7 @@ OpenNext 官方提示 Windows 支持不完整。若构建在读取 pnpm 符号�
 - Account → R2 → Edit
 - Account → Account Settings → Read
 
-将 Token 限制到 Shafile 所在账号，不要提交到仓库。
+将 Token 限制到 Shafile 所在账号，不要提交到仓库。任一 secret 缺失时，部署 job 会输出提示并跳过部署，不会让 main 分支 CI 失败。
 
 Worker 运行时 secrets（`TICKET_SECRET`、`IP_HASH_SECRET`、`CRON_SECRET`）保留在 Cloudflare；`--keep-vars` 会避免部署时删除它们。如果 Worker 被重新创建，需要用 `wrangler secret put` 重新设置。
 

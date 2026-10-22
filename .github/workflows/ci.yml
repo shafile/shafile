@@ -165,6 +165,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Check Cloudflare credentials
+        id: cloudflare
+        run: |
+          if [ -n "$CLOUDFLARE_API_TOKEN" ] && [ -n "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Cloudflare deploy skipped::Set CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID repository secrets to enable."
+          fi
+
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
@@ -177,18 +187,23 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
+        if: steps.cloudflare.outputs.enabled == 'true'
         run: pnpm install --frozen-lockfile
 
       - name: Apply D1 migrations
+        if: steps.cloudflare.outputs.enabled == 'true'
         run: pnpm exec wrangler d1 migrations apply shafile-db --remote
 
       - name: Build Cloudflare Worker
+        if: steps.cloudflare.outputs.enabled == 'true'
         run: pnpm cf:build
 
       - name: Deploy Worker
+        if: steps.cloudflare.outputs.enabled == 'true'
         run: pnpm exec wrangler deploy --keep-vars
 
       - name: Smoke test production
+        if: steps.cloudflare.outputs.enabled == 'true'
         env:
           PRODUCTION_URL: ${{ vars.PRODUCTION_URL }}
         run: |

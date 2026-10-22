@@ -176,7 +176,7 @@ Create the API token at <https://dash.cloudflare.com/profile/api-tokens> with:
 - Account → R2 → Edit
 - Account → Account Settings → Read
 
-Limit the token to the Shafile account. Do not commit the token.
+Limit the token to the Shafile account. Do not commit the token. If either secret is missing, the deploy job reports a notice and skips the deployment instead of failing the main branch.
 
 The Worker's runtime secrets (`TICKET_SECRET`, `IP_HASH_SECRET`, `CRON_SECRET`) stay in Cloudflare; `--keep-vars` prevents a deploy from deleting them. If the Worker is recreated, set the secrets again with `wrangler secret put`.
 
