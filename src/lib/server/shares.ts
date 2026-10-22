@@ -5,7 +5,11 @@ import {
   deleteShareBlobs,
   deleteUploadTemp,
 } from "./storage";
-import { BURN_GRACE_MS, EXPIRED_GRACE_MS, TOMBSTONE_TTL_MS } from "@/lib/shared/limits";
+import {
+  BURN_GRACE_MS,
+  REVOKED_GRACE_MS,
+  TOMBSTONE_TTL_MS,
+} from "@/lib/shared/limits";
 import type {
   PasswordMeta,
   ShareMeta,
@@ -268,11 +272,10 @@ export async function runCleanup(now = Date.now()): Promise<void> {
     for (const row of pending) {
       const status = deriveStatus(row, now);
       const shouldPurge =
+        status === "expired" ||
         (status === "exhausted" && (row.burn_at ?? 0) <= now) ||
-        (status === "expired" &&
-          (row.expires_at ?? 0) + EXPIRED_GRACE_MS <= now) ||
         (status === "revoked" &&
-          (row.revoked_at ?? 0) + EXPIRED_GRACE_MS <= now) ||
+          (row.revoked_at ?? 0) + REVOKED_GRACE_MS <= now) ||
         status === "burned";
       if (shouldPurge) await maybePurge(row.id);
 

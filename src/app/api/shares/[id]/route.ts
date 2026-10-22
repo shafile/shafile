@@ -1,6 +1,6 @@
 import { AppError, apiJson, routeError } from "@/lib/server/http";
 import { rateLimitKey, consumeRateLimit } from "@/lib/server/rate-limit";
-import { requireShare, toShareMeta } from "@/lib/server/shares";
+import { maybePurge, requireShare, toShareMeta } from "@/lib/server/shares";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -19,7 +19,13 @@ export async function GET(
     if (!limit.allowed) throw new AppError("RATE_LIMITED", 429);
 
     const row = requireShare(id);
-    return apiJson(toShareMeta(row));
+    const meta = toShareMeta(row);
+    if (meta.status === "expired") {
+      await maybePurge(id).catch((error) => {
+        console.error("[shafile] expiry cleanup failed", error);
+      });
+    }
+    return apiJson(meta);
   } catch (error) {
     return routeError(error);
   }

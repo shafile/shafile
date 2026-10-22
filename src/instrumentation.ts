@@ -18,6 +18,6 @@ export async function register() {
 
   const interval = setInterval(() => {
     void runCleanup();
-  }, 10 * 60 * 1000);
+  }, 60 * 1000);
   interval.unref();
 }

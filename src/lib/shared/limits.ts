@@ -6,7 +6,7 @@ export const DEFAULT_MAX_FILE_BYTES = 5 * 1024 * 1024 * 1024;
 export const ACCESS_TOKEN_TTL_MS = 10 * 60 * 1000;
 export const BURN_GRACE_MS = 10 * 60 * 1000;
 export const DRAFT_TTL_MS = 24 * 60 * 60 * 1000;
-export const EXPIRED_GRACE_MS = 60 * 60 * 1000;
+export const REVOKED_GRACE_MS = 60 * 60 * 1000;
 export const TOMBSTONE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
 export const SHARE_ID_PATTERN = /^[A-Za-z0-9_-]{22}$/;
