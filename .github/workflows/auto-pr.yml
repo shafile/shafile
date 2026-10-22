@@ -27,15 +27,15 @@ jobs:
           BRANCH: ${{ github.ref_name }}
         run: |
           set -eu
-          existing=$(gh pr list --base main --head "$BRANCH" --state open --json number --jq '.[0].number // empty')
+          existing=$(gh pr list --base develop --head "$BRANCH" --state open --json number --jq '.[0].number // empty')
           if [ -n "$existing" ]; then
             echo "PR #$existing already exists for $BRANCH"
             exit 0
           fi
 
-          git fetch origin main --quiet
-          title=$(git log --reverse --pretty=%s origin/main..HEAD | head -n 1)
-          body=$(git log --reverse --pretty=%b origin/main..HEAD | head -n 1)
+          git fetch origin develop --quiet
+          title=$(git log --reverse --pretty=%s origin/develop..HEAD | head -n 1)
+          body=$(git log --reverse --pretty=%b origin/develop..HEAD | head -n 1)
 
           if [ -z "$title" ]; then
             title="Automated pull request for $BRANCH"
@@ -44,4 +44,4 @@ jobs:
             body="Automated pull request for $BRANCH."
           fi
 
-          gh pr create --base main --head "$BRANCH" --title "$title" --body "$body"
+          gh pr create --base develop --head "$BRANCH" --title "$title" --body "$body"
