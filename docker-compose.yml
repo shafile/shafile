@@ -1,0 +1,29 @@
+services:
+  shafile:
+    build: .
+    image: shafile:latest
+    ports:
+      - "3000:3000"
+    environment:
+      SHAFILE_DATA_DIR: /app/data
+      MAX_SHARE_BYTES: "5368709120"
+      MAX_STORAGE_BYTES: "53687091200"
+      TRUST_PROXY: "false"
+      # Set these explicitly in production.
+      # TICKET_SECRET: change-me
+      # IP_HASH_SECRET: change-me
+    volumes:
+      - shafile-data:/app/data
+    restart: unless-stopped
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+volumes:
+  shafile-data:
