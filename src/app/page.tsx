@@ -50,7 +50,59 @@ export default async function HomePage() {
   ];
 
   return (
-    <div>
+    <>
+      <div className="tg-home">
+        <section className="container-page py-8 sm:py-12">
+          <span className="eyebrow">
+            <ShieldCheck size={15} />
+            {share("encryptedInBrowser")}
+          </span>
+          <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
+            {t("ctaTitle")}
+          </h2>
+          <p className="mt-2 max-w-xl text-sm leading-6 text-muted">
+            {t("ctaDesc")}
+          </p>
+          <div className="mt-6 grid gap-3 sm:grid-cols-2">
+            <Link
+              href="/create"
+              className="card flex flex-col p-5 transition hover:border-brand"
+            >
+              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-soft text-brand">
+                <LockKeyhole size={21} />
+              </span>
+              <h2 className="mt-4 flex items-center gap-2 text-lg font-bold">
+                {t("ctaPrimary")}
+                <ArrowRight size={17} className="directional-icon text-brand" />
+              </h2>
+              <p className="mt-1 text-sm leading-6 text-muted">
+                {t("featureE2eeDesc")}
+              </p>
+            </Link>
+            <Link
+              href="/manage"
+              className="card flex flex-col p-5 transition hover:border-brand"
+            >
+              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-soft text-blue">
+                <KeyRound size={21} />
+              </span>
+              <h2 className="mt-4 flex items-center gap-2 text-lg font-bold">
+                {common("navManage")}
+                <ArrowRight size={17} className="directional-icon text-brand" />
+              </h2>
+              <p className="mt-1 text-sm leading-6 text-muted">
+                {common("footerNote")}
+              </p>
+            </Link>
+          </div>
+          <p className="notice notice-info mt-4">
+            <ShieldCheck size={17} className="shrink-0" />
+            <span>{t("heroNote")}</span>
+          </p>
+        </section>
+      </div>
+
+      <div className="web-home">
       <section className="container-page grid items-center gap-10 pb-16 pt-12 lg:grid-cols-[1.08fr_0.92fr] lg:gap-14 lg:pb-24 lg:pt-20">
         <div>
           <span className="eyebrow">
@@ -208,6 +260,7 @@ export default async function HomePage() {
           </Link>
         </div>
       </section>
-    </div>
+      </div>
+    </>
   );
 }

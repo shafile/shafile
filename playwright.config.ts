@@ -21,6 +21,7 @@ export default defineConfig({
         env: {
           IP_HASH_SECRET: `e2e-${Date.now()}`,
           TELEGRAM_BOT_TOKEN: "e2e-telegram-bot-token",
+          TELEGRAM_WEBHOOK_SECRET: "e2e-telegram-webhook-secret",
         },
       },
   projects: [

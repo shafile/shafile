@@ -1009,6 +1009,18 @@
     display: none;
   }
 
+  .tg-home {
+    display: none;
+  }
+
+  html[data-tg] .web-home {
+    display: none;
+  }
+
+  html[data-tg] .tg-home {
+    display: block;
+  }
+
   @media (max-width: 639px) {
     .site-header .container-page {
       gap: 0.25rem;
