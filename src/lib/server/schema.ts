@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS shares (
   wrap_nonce BLOB,
   kdf_params TEXT,
   manage_token_hash BLOB NOT NULL,
+  telegram_user_hash BLOB,
   upload_token_hash BLOB,
   manifest_hash BLOB,
   blob_bytes INTEGER NOT NULL DEFAULT 0,
@@ -85,6 +86,7 @@ export type ShareRow = {
   wrap_nonce: Uint8Array | null;
   kdf_params: string | null;
   manage_token_hash: Uint8Array;
+  telegram_user_hash: Uint8Array | null;
   upload_token_hash: Uint8Array | null;
   manifest_hash: Uint8Array | null;
   blob_bytes: number;

@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import {
   AlertTriangle,
   CalendarClock,
@@ -53,7 +54,20 @@ import { CopyButton } from "@/components/ui/copy-button";
 import { ErrorNotice } from "@/components/ui/error-notice";
 import { Progress } from "@/components/ui/progress";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { MarkdownView } from "./markdown-view";
+import { haptic, setClosingConfirmation } from "@/lib/client/telegram";
+
+const MarkdownView = dynamic(
+  () => import("./markdown-view").then((module) => module.MarkdownView),
+  {
+    ssr: false,
+    loading: () => (
+      <div
+        className="h-24 animate-pulse rounded-xl bg-surface-2"
+        aria-hidden="true"
+      />
+    ),
+  },
+);
 
 type AccessState = { token: string; issuedAt: number };
 
@@ -164,6 +178,11 @@ export function ShareView({ id }: { id: string }) {
     return () => window.clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    setClosingConfirmation(downloading || viewingText || unlocking);
+    return () => setClosingConfirmation(false);
+  }, [downloading, viewingText, unlocking]);
+
   const loadManifest = useCallback(
     async (key: Uint8Array, token: string) => {
       setManifestLoading(true);
@@ -258,8 +277,10 @@ export function ShareView({ id }: { id: string }) {
       setContentKey(key);
       setAccess({ token: granted.token, issuedAt: Date.now() });
       setPassword("");
+      haptic("success");
       if (meta.kind === "file") await loadManifest(key, granted.token);
     } catch (error) {
+      haptic("error");
       setUnlockError(error);
     } finally {
       setUnlocking(false);
@@ -292,8 +313,10 @@ export function ShareView({ id }: { id: string }) {
       const plaintext = await decryptText(contentKey, bytes, id);
       setText(plaintext);
       setKeepContent(true);
+      haptic("success");
       await refreshMeta();
     } catch (error) {
+      haptic("error");
       setTextError(error);
     } finally {
       setViewingText(false);
@@ -323,8 +346,10 @@ export function ShareView({ id }: { id: string }) {
       if (result.cancelled) return;
       setKeepContent(true);
       setDownloadDone(true);
+      haptic("success");
       await refreshMeta();
     } catch (error) {
+      haptic("error");
       setDownloadError(error);
     } finally {
       setDownloading(false);
@@ -476,6 +501,10 @@ export function ShareView({ id }: { id: string }) {
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   autoComplete="current-password"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  enterKeyHint="go"
                   autoFocus
                 />
                 <button

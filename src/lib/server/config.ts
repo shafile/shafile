@@ -1,4 +1,4 @@
-import { randomBytes } from "node:crypto";
+import { createHmac, randomBytes } from "node:crypto";
 import { join, resolve } from "node:path";
 import { isCloudflareRuntime } from "./runtime";
 
@@ -47,7 +47,15 @@ export function ensureDataDirs(): void {
 type Secrets = {
   ticketSecret: string;
   ipHashSecret: string;
+  telegramSessionSecret: string;
+  telegramHashSecret: string;
 };
+
+function deriveSecret(seed: string, label: string): string {
+  return createHmac("sha256", seed)
+    .update(`shafile/v1/${label}`)
+    .digest("base64url");
+}
 
 const globalForSecrets = globalThis as unknown as {
   __shafileSecrets?: Secrets;
@@ -58,10 +66,16 @@ export function getSecrets(): Secrets {
 
   const envTicket = process.env.TICKET_SECRET;
   const envIp = process.env.IP_HASH_SECRET;
+  const envSession = process.env.TELEGRAM_SESSION_SECRET;
+  const envHash = process.env.TELEGRAM_HASH_SECRET;
   if (envTicket && envIp) {
     globalForSecrets.__shafileSecrets = {
       ticketSecret: envTicket,
       ipHashSecret: envIp,
+      telegramSessionSecret:
+        envSession ?? deriveSecret(envTicket, "telegram-session"),
+      telegramHashSecret:
+        envHash ?? deriveSecret(envTicket, "telegram-user-hash"),
     };
     return globalForSecrets.__shafileSecrets;
   }
@@ -78,14 +92,31 @@ export function getSecrets(): Secrets {
     fileSecrets = JSON.parse(readFileSync(secretPath, "utf8")) as Partial<Secrets>;
   }
 
+  const ticketSecret =
+    envTicket ?? fileSecrets.ticketSecret ?? randomBytes(32).toString("base64url");
+  const ipHashSecret =
+    envIp ?? fileSecrets.ipHashSecret ?? randomBytes(32).toString("base64url");
+  const telegramSessionSecret =
+    envSession ??
+    fileSecrets.telegramSessionSecret ??
+    deriveSecret(ticketSecret, "telegram-session");
+  const telegramHashSecret =
+    envHash ??
+    fileSecrets.telegramHashSecret ??
+    deriveSecret(ticketSecret, "telegram-user-hash");
+
   const secrets: Secrets = {
-    ticketSecret:
-      envTicket ?? fileSecrets.ticketSecret ?? randomBytes(32).toString("base64url"),
-    ipHashSecret:
-      envIp ?? fileSecrets.ipHashSecret ?? randomBytes(32).toString("base64url"),
+    ticketSecret,
+    ipHashSecret,
+    telegramSessionSecret,
+    telegramHashSecret,
   };
 
-  if (!existsSync(secretPath)) {
+  const shouldWrite =
+    !existsSync(secretPath) ||
+    fileSecrets.telegramSessionSecret !== telegramSessionSecret ||
+    fileSecrets.telegramHashSecret !== telegramHashSecret;
+  if (shouldWrite) {
     writeFileSync(secretPath, JSON.stringify(secrets, null, 2), {
       encoding: "utf8",
       mode: 0o600,

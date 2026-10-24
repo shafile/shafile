@@ -1,6 +1,7 @@
 {
   "Common": {
     "appName": "Shafile",
+    "share": "Share",
     "tagline": "End-to-end encrypted sharing",
     "navCreate": "Create",
     "navManage": "My shares",
@@ -237,7 +238,13 @@
     "passwordProtected": "Password protected",
     "remaining": "Remaining",
     "open": "Open",
-    "keyWarning": "Links copied from here contain the decryption key."
+    "keyWarning": "Links copied from here contain the decryption key.",
+    "telegramTitle": "Telegram account",
+    "telegramDesc": "Shares created while signed in with Telegram. Link keys stay on the device that created them.",
+    "telegramAdopt": "Link this browser's shares",
+    "telegramAdoptHint": "Attach the shares stored in this browser to your Telegram account so you can manage them on other devices. Link keys stay on this device.",
+    "telegramAdoptSuccess": "{count} shares linked to Telegram.",
+    "telegramAdoptPartial": "{linked} linked, {skipped} skipped."
   },
   "Status": {
     "ready": "Ready",
@@ -276,7 +283,9 @@
     "EMPTY_TEXT": "The note is empty.",
     "FILE_REQUIRED": "Choose a file first.",
     "INTERNAL_ERROR": "Something went wrong on the server.",
-    "FILE_MISSING": "The encrypted file is missing on the server."
+    "FILE_MISSING": "The encrypted file is missing on the server.",
+    "TELEGRAM_AUTH_FAILED": "Telegram could not verify this session. Reopen the Mini App and try again.",
+    "TELEGRAM_NOT_CONFIGURED": "Telegram sign-in is not configured on this server."
   },
   "Meta": {
     "title": "Shafile — end-to-end encrypted file and text sharing",

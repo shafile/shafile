@@ -1,6 +1,7 @@
 {
   "Common": {
     "appName": "Shafile",
+    "share": "Compartir",
     "tagline": "Enlaces cifrados de extremo a extremo",
     "navCreate": "Crear",
     "navManage": "Mis enlaces",
@@ -237,7 +238,13 @@
     "passwordProtected": "Protegido con contraseña",
     "remaining": "Restantes",
     "open": "Abrir",
-    "keyWarning": "Los enlaces copiados desde aquí contienen la clave de descifrado."
+    "keyWarning": "Los enlaces copiados desde aquí contienen la clave de descifrado.",
+    "telegramTitle": "Cuenta de Telegram",
+    "telegramDesc": "Enlaces creados mientras iniciaste sesión con Telegram. Las claves de los enlaces permanecen en el dispositivo que los creó.",
+    "telegramAdopt": "Vincular los enlaces de este navegador",
+    "telegramAdoptHint": "Vincula los enlaces guardados en este navegador a tu cuenta de Telegram para administrarlos desde otros dispositivos. Las claves de los enlaces permanecen en este dispositivo.",
+    "telegramAdoptSuccess": "Se vincularon {count} enlaces a Telegram.",
+    "telegramAdoptPartial": "{linked} vinculados, {skipped} omitidos."
   },
   "Status": {
     "ready": "Listo",
@@ -276,7 +283,9 @@
     "EMPTY_TEXT": "La nota está vacía.",
     "FILE_REQUIRED": "Elige un archivo primero.",
     "INTERNAL_ERROR": "Algo salió mal en el servidor.",
-    "FILE_MISSING": "Falta el archivo cifrado en el servidor."
+    "FILE_MISSING": "Falta el archivo cifrado en el servidor.",
+    "TELEGRAM_AUTH_FAILED": "Telegram no pudo verificar esta sesión. Vuelve a abrir la Mini App.",
+    "TELEGRAM_NOT_CONFIGURED": "El inicio de sesión con Telegram no está configurado en este servidor."
   },
   "Meta": {
     "title": "Shafile — compartir archivos y textos cifrados de extremo a extremo",

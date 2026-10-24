@@ -1,60 +1,28 @@
 "use client";
 
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import rehypeHighlight from "rehype-highlight";
-import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
+import dynamic from "next/dynamic";
+import { MarkdownRenderer } from "./markdown-renderer";
 
-const BLOCKED_TAGS = new Set([
-  "img",
-  "iframe",
-  "object",
-  "embed",
-  "form",
-  "input",
-  "button",
-  "textarea",
-  "select",
-  "style",
-  "script",
-  "link",
-  "meta",
-]);
-
-const schema = {
-  ...defaultSchema,
-  tagNames: defaultSchema.tagNames?.filter((tag) => !BLOCKED_TAGS.has(tag)),
-  protocols: {
-    ...defaultSchema.protocols,
-    href: ["http", "https", "mailto"],
+const MarkdownViewHighlight = dynamic(
+  () =>
+    import("./markdown-view-highlight").then(
+      (module) => module.MarkdownViewHighlight,
+    ),
+  {
+    loading: () => (
+      <div
+        className="h-24 animate-pulse rounded-xl bg-surface-2"
+        aria-hidden="true"
+      />
+    ),
   },
-};
+);
+
+const CODE_FENCE = /(^|\n)[ \t]*(```|~~~)/;
 
 export function MarkdownView({ source }: { source: string }) {
-  return (
-    <div className="markdown-body" dir="auto">
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        rehypePlugins={[
-          [rehypeSanitize, schema],
-          [rehypeHighlight, { detect: true, ignoreMissing: true }],
-        ]}
-        skipHtml
-        components={{
-          a: ({ href, title, children }) => (
-            <a
-              href={href}
-              title={title}
-              target="_blank"
-              rel="noopener noreferrer nofollow"
-            >
-              {children}
-            </a>
-          ),
-        }}
-      >
-        {source}
-      </ReactMarkdown>
-    </div>
-  );
+  if (CODE_FENCE.test(source)) {
+    return <MarkdownViewHighlight source={source} />;
+  }
+  return <MarkdownRenderer source={source} />;
 }

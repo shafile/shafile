@@ -8,6 +8,9 @@ import type {
   CreateShareResponse,
   LookupResult,
   ShareMeta,
+  TelegramAdoptResponse,
+  TelegramSessionResponse,
+  TelegramSharesResponse,
   UploadStatusResponse,
 } from "@/lib/shared/types";
 
@@ -55,13 +58,53 @@ async function requestJson<T>(
   }
 }
 
+function authHeaders(token?: string | null): Record<string, string> {
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 export async function createShare(
   body: unknown,
+  sessionToken?: string | null,
 ): Promise<CreateShareResponse> {
   return requestJson<CreateShareResponse>("/api/shares", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders(sessionToken),
+    },
     body: JSON.stringify(body),
+  });
+}
+
+export async function exchangeTelegramSession(
+  initData: string,
+): Promise<TelegramSessionResponse> {
+  return requestJson<TelegramSessionResponse>("/api/telegram/session", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ initData }),
+  });
+}
+
+export async function listTelegramShares(
+  sessionToken: string,
+): Promise<TelegramSharesResponse> {
+  return requestJson<TelegramSharesResponse>("/api/telegram/shares", {
+    headers: authHeaders(sessionToken),
+  });
+}
+
+export async function adoptTelegramShares(
+  items: { id: string; manageToken: string }[],
+  sessionToken: string,
+): Promise<TelegramAdoptResponse> {
+  return requestJson<TelegramAdoptResponse>("/api/telegram/adopt", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders(sessionToken),
+    },
+    body: JSON.stringify({ items }),
   });
 }
 
@@ -175,11 +218,15 @@ export async function lookupShares(
 
 export async function revokeShare(
   id: string,
-  manageToken: string,
+  manageToken?: string | null,
+  sessionToken?: string | null,
 ): Promise<void> {
   await request(`/api/shares/${encodeURIComponent(id)}/revoke`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ manageToken }),
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders(sessionToken),
+    },
+    body: JSON.stringify(manageToken ? { manageToken } : {}),
   });
 }

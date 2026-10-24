@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { optionalTelegramSession } from "@/lib/server/auth";
 import { createFileShare, createTextShare } from "@/lib/server/create";
 import {
   AppError,
@@ -62,6 +63,7 @@ export async function POST(request: Request) {
     );
     if (!limit.allowed) throw new AppError("RATE_LIMITED", 429);
 
+    const session = optionalTelegramSession(request);
     const raw = await readJsonLimited(request, 1024 * 1024);
     const parsed = createSchema.safeParse(raw);
     if (!parsed.success) throw new AppError("INVALID_REQUEST", 400);
@@ -75,6 +77,7 @@ export async function POST(request: Request) {
         maxViews: input.maxViews,
         password: input.password,
         payload: input.payload,
+        ownerHash: session?.uid ?? null,
       });
       return apiJson({ id: row.id, kind: row.kind, manageToken }, 201);
     }
@@ -89,6 +92,7 @@ export async function POST(request: Request) {
       chunkCount: input.chunkCount,
       noncePrefix: input.noncePrefix,
       fileId: input.fileId,
+      ownerHash: session?.uid ?? null,
     });
 
     return apiJson(

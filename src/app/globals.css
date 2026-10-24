@@ -36,6 +36,22 @@
     0 8px 24px rgba(48, 30, 18, 0.05);
   --shadow-pop: 0 8px 24px rgba(30, 18, 10, 0.14);
   --shadow-modal: 0 16px 48px rgba(20, 12, 8, 0.2);
+  --safe-top: max(
+    env(safe-area-inset-top, 0px),
+    var(--tg-safe-top, 0px)
+  );
+  --safe-bottom: max(
+    env(safe-area-inset-bottom, 0px),
+    var(--tg-safe-bottom, 0px)
+  );
+  --safe-left: max(
+    env(safe-area-inset-left, 0px),
+    var(--tg-safe-left, 0px)
+  );
+  --safe-right: max(
+    env(safe-area-inset-right, 0px),
+    var(--tg-safe-right, 0px)
+  );
   --font-app: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
     "Segoe UI", "PingFang SC", "Hiragino Sans", "Microsoft YaHei",
     "Yu Gothic UI", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR",
@@ -116,11 +132,17 @@
 
   body {
     min-height: 100vh;
+    min-height: 100dvh;
+    min-height: var(--tg-viewport-stable-height, 100dvh);
     background: var(--background);
     color: var(--foreground);
     font-family: var(--font-app);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+  }
+
+  html[data-tg] body {
+    overscroll-behavior-y: none;
   }
 
   ::selection {
@@ -147,12 +169,20 @@
     width: 100%;
     max-width: 1180px;
     margin-inline: auto;
-    padding-inline: 1rem;
+    padding-inline: max(
+      1rem,
+      var(--safe-left),
+      var(--safe-right)
+    );
   }
 
   @media (min-width: 640px) {
     .container-page {
-      padding-inline: 1.5rem;
+      padding-inline: max(
+        1.5rem,
+        var(--safe-left),
+        var(--safe-right)
+      );
     }
 
     .nav-link {
@@ -164,6 +194,7 @@
     position: sticky;
     top: 0;
     z-index: 40;
+    padding-top: var(--safe-top);
     border-bottom: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
     background: color-mix(in srgb, var(--background) 86%, transparent);
     backdrop-filter: blur(12px) saturate(1.1);
@@ -187,7 +218,7 @@
     justify-content: center;
     border-radius: 9px;
     background: var(--brand-solid);
-    color: #fff;
+    color: var(--brand-solid-ink, #fff);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16),
       0 1px 2px rgba(30, 18, 10, 0.12);
   }
@@ -325,7 +356,7 @@
 
   .btn-primary {
     background: var(--brand-solid);
-    color: #fff;
+    color: var(--brand-solid-ink, #fff);
   }
 
   .btn-primary:hover {
@@ -677,7 +708,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 1rem;
+    padding-top: max(1rem, var(--safe-top));
+    padding-bottom: max(1rem, var(--safe-bottom));
+    padding-inline: max(1rem, var(--safe-left), var(--safe-right));
     background: rgba(24, 16, 12, 0.38);
     backdrop-filter: blur(8px);
   }
@@ -736,6 +769,7 @@
   .site-footer {
     margin-top: 4rem;
     border-top: 1px solid var(--line);
+    padding-bottom: var(--safe-bottom);
   }
 
   [dir="rtl"] .directional-icon {
@@ -893,6 +927,17 @@
     font-size: 0.9em;
   }
 
+  .md-table-wrap {
+    max-width: 100%;
+    overflow-x: auto;
+    margin-block: 0.9em;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .md-table-wrap table {
+    margin-block: 0;
+  }
+
   .markdown-body th,
   .markdown-body td {
     border: 1px solid var(--line);
@@ -958,6 +1003,53 @@
 
   .fade-rise {
     animation: fade-rise 420ms ease both;
+  }
+
+  html[data-tg-ready] .theme-toggle {
+    display: none;
+  }
+
+  @media (max-width: 639px) {
+    .site-header .container-page {
+      gap: 0.25rem;
+    }
+
+    .nav-link {
+      padding-inline: 0.45rem;
+      font-size: 0.82rem;
+    }
+  }
+
+  @media (max-width: 359px) {
+    .nav-link {
+      padding-inline: 0.3rem;
+      font-size: 0.78rem;
+    }
+  }
+
+  @media (pointer: coarse) {
+    .brand,
+    .btn,
+    .choice-card,
+    .icon-button,
+    .nav-link,
+    .popover-item,
+    .tab-button {
+      min-height: 44px;
+    }
+
+    .icon-button {
+      min-width: 44px;
+    }
+
+    input.field,
+    select.field,
+    textarea.field,
+    input:not([type="checkbox"]):not([type="radio"]),
+    select,
+    textarea {
+      font-size: 16px;
+    }
   }
 
 }

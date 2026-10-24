@@ -19,6 +19,18 @@ const globalForNodeDb = globalThis as unknown as {
   __shafileNodeDb?: DatabaseSyncInstance;
 };
 
+function migrateSchema(db: DatabaseSyncInstance): void {
+  const columns = db
+    .prepare("PRAGMA table_info(shares)")
+    .all() as { name: string }[];
+  if (!columns.some((column) => column.name === "telegram_user_hash")) {
+    db.exec("ALTER TABLE shares ADD COLUMN telegram_user_hash BLOB;");
+  }
+  db.exec(
+    "CREATE INDEX IF NOT EXISTS idx_shares_telegram_user ON shares(telegram_user_hash, created_at);",
+  );
+}
+
 function database(): DatabaseSyncInstance {
   if (globalForNodeDb.__shafileNodeDb) return globalForNodeDb.__shafileNodeDb;
   const { DatabaseSync } = loadSqlite();
@@ -28,6 +40,7 @@ function database(): DatabaseSyncInstance {
   db.exec("PRAGMA foreign_keys = ON;");
   db.exec("PRAGMA busy_timeout = 5000;");
   db.exec(SCHEMA);
+  migrateSchema(db);
   globalForNodeDb.__shafileNodeDb = db;
   return db;
 }

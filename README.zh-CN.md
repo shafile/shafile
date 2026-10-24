@@ -40,6 +40,22 @@ pnpm dev
 3. 创建后复制分享链接；如使用密码模式，请通过另一渠道发送密码。
 4. 接收者在浏览器中打开链接，解密并查看或下载。
 
+### Telegram Mini App
+
+Shafile 可直接作为 Telegram Mini App 运行，无需额外配置。使用 HTTPS 部署后，在 BotFather 中设置 Mini App URL。
+
+- 仅在检测到 Telegram 启动参数时加载 Telegram SDK；普通网页访问仍不加载第三方脚本。在 Telegram 内，官方 SDK 属于第三方代码，拥有与应用相同的页面权限。
+- 服务端会校验 `initData`，分享归属仅保存为 Telegram 用户 ID 的哈希。管理页可跨设备列出并撤销已归属的分享，也可关联当前浏览器中已有的分享；链接密钥仍只保存在创建它的设备上。
+- 自动应用 Telegram 主题色、安全区、返回按钮和成功触感反馈。
+- Telegram 向 URL fragment 追加启动参数时，分享链接中的 `#k=` 密钥仍可读取。
+- Content Security Policy 仅允许 `telegram.org` 及其子域内嵌；其他来源仍被阻止。
+
+部署与真机检查清单见 [docs/telegram-mini-app.md](docs/telegram-mini-app.md)，P1 身份设计见 [docs/telegram-identity-p1.md](docs/telegram-identity-p1.md)。
+
+### 移动端
+
+移动浏览器启用 `viewport-fit=cover`、刘海与 Telegram 界面安全区、44px 触控目标、16px 输入框（避免 iOS 自动缩放），Markdown 宽表格可横向滚动。
+
 ### 生产部署
 
 ```bash
@@ -87,6 +103,9 @@ GitHub Actions（`.github/workflows/ci.yml`）会运行 lint、类型检查、i1
 | `BLOB_DIR`          | `$DATA_DIR/blobs`      | 密文目录              |
 | `TICKET_SECRET`     | 自动生成               | 访问令牌 HMAC 密钥    |
 | `IP_HASH_SECRET`    | 自动生成               | 限流 IP 哈希密钥      |
+| `TELEGRAM_BOT_TOKEN` | —                     | 启用 Telegram `initData` 会话交换 |
+| `TELEGRAM_SESSION_SECRET` | 由 `TICKET_SECRET` 派生 | Telegram 会话令牌 HMAC 密钥 |
+| `TELEGRAM_HASH_SECRET` | 由 `TICKET_SECRET` 派生 | Telegram 用户 ID 哈希密钥 |
 | `MAX_SHARE_BYTES`   | 5 GiB                  | 单文件上限            |
 | `MAX_STORAGE_BYTES` | 50 GiB                 | 总存储上限            |
 | `TRUST_PROXY`       | `false`                | 反向代理后设为 `true` |

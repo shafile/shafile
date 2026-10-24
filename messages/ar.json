@@ -1,6 +1,7 @@
 {
   "Common": {
     "appName": "Shafile",
+    "share": "مشاركة",
     "tagline": "مشاركة مشفّرة من طرف إلى طرف",
     "navCreate": "إنشاء",
     "navManage": "مشاركاتي",
@@ -237,7 +238,13 @@
     "passwordProtected": "محمية بكلمة مرور",
     "remaining": "المتبقي",
     "open": "فتح",
-    "keyWarning": "الروابط المنسوخة من هنا تحتوي على مفتاح فك التشفير."
+    "keyWarning": "الروابط المنسوخة من هنا تحتوي على مفتاح فك التشفير.",
+    "telegramTitle": "حساب Telegram",
+    "telegramDesc": "المشاركات التي أُنشئت أثناء تسجيل الدخول عبر Telegram. تبقى مفاتيح الروابط على الجهاز الذي أنشأها.",
+    "telegramAdopt": "ربط مشاركات هذا المتصفح",
+    "telegramAdoptHint": "اربط المشاركات المحفوظة في هذا المتصفح بحساب Telegram لإدارتها من أجهزة أخرى. تبقى مفاتيح الروابط على هذا الجهاز.",
+    "telegramAdoptSuccess": "تم ربط {count} من المشاركات بـ Telegram.",
+    "telegramAdoptPartial": "تم ربط {linked} وتخطي {skipped}."
   },
   "Status": {
     "ready": "جاهز",
@@ -276,7 +283,9 @@
     "EMPTY_TEXT": "الملاحظة فارغة.",
     "FILE_REQUIRED": "اختر ملفًا أولًا.",
     "INTERNAL_ERROR": "حدث خطأ في الخادم.",
-    "FILE_MISSING": "الملف المشفّر مفقود من الخادم."
+    "FILE_MISSING": "الملف المشفّر مفقود من الخادم.",
+    "TELEGRAM_AUTH_FAILED": "لم يتمكن Telegram من التحقق من هذه الجلسة. أعد فتح التطبيق المصغّر وحاول مرة أخرى.",
+    "TELEGRAM_NOT_CONFIGURED": "لم يتم إعداد تسجيل الدخول عبر Telegram على هذا الخادم."
   },
   "Meta": {
     "title": "Shafile — مشاركة ملفات ونصوص مشفّرة من طرف إلى طرف",

@@ -1,6 +1,7 @@
 {
   "Common": {
     "appName": "Shafile",
+    "share": "साझा करें",
     "tagline": "एंड-टू-एंड एन्क्रिप्टेड शेयरिंग",
     "navCreate": "बनाएँ",
     "navManage": "मेरे शेयर",
@@ -237,7 +238,13 @@
     "passwordProtected": "पासवर्ड से सुरक्षित",
     "remaining": "बचे",
     "open": "खोलें",
-    "keyWarning": "यहाँ से कॉपी किए गए लिंक में डिक्रिप्शन कुंजी है।"
+    "keyWarning": "यहाँ से कॉपी किए गए लिंक में डिक्रिप्शन कुंजी है।",
+    "telegramTitle": "Telegram खाता",
+    "telegramDesc": "Telegram में साइन इन रहते हुए बनाए गए शेयर। लिंक कुंजियाँ उसी डिवाइस पर रहती हैं जिसने उन्हें बनाया।",
+    "telegramAdopt": "इस ब्राउज़र के शेयर लिंक करें",
+    "telegramAdoptHint": "इस ब्राउज़र में सहेजे गए शेयर को अपने Telegram खाते से जोड़ें ताकि आप उन्हें अन्य डिवाइस पर प्रबंधित कर सकें। लिंक कुंजियाँ इसी डिवाइस पर रहती हैं।",
+    "telegramAdoptSuccess": "{count} शेयर Telegram से लिंक किए गए।",
+    "telegramAdoptPartial": "{linked} लिंक किए गए, {skipped} छोड़े गए।"
   },
   "Status": {
     "ready": "तैयार",
@@ -276,7 +283,9 @@
     "EMPTY_TEXT": "नोट खाली है।",
     "FILE_REQUIRED": "पहले फ़ाइल चुनें।",
     "INTERNAL_ERROR": "सर्वर पर कुछ गड़बड़ हुई।",
-    "FILE_MISSING": "सर्वर पर एन्क्रिप्टेड फ़ाइल नहीं है।"
+    "FILE_MISSING": "सर्वर पर एन्क्रिप्टेड फ़ाइल नहीं है।",
+    "TELEGRAM_AUTH_FAILED": "Telegram इस सत्र को सत्यापित नहीं कर सका। Mini App फिर से खोलें।",
+    "TELEGRAM_NOT_CONFIGURED": "इस सर्वर पर Telegram साइन-इन कॉन्फ़िगर नहीं है।"
   },
   "Meta": {
     "title": "Shafile — एंड-टू-एंड एन्क्रिप्टेड फ़ाइल और टेक्स्ट शेयरिंग",

@@ -35,6 +35,7 @@ export type TextShareInput = {
   maxViews: number | null;
   password: PasswordInput | null;
   payload: string;
+  ownerHash?: Uint8Array | null;
 };
 
 export type FileShareInput = {
@@ -47,6 +48,7 @@ export type FileShareInput = {
   chunkCount: number;
   noncePrefix: string;
   fileId: string;
+  ownerHash?: Uint8Array | null;
 };
 
 function decodeField(
@@ -187,8 +189,8 @@ export async function createTextShare(input: TextShareInput): Promise<{
       `INSERT INTO shares (
         id, kind, status, created_at, start_at, expires_at, max_views, views,
         password_salt, password_verifier, wrapped_key, wrap_nonce, kdf_params,
-        manage_token_hash, blob_bytes
-      ) VALUES (?, 'text', 'ready', ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?)`,
+        manage_token_hash, telegram_user_hash, blob_bytes
+      ) VALUES (?, 'text', 'ready', ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         input.id,
         now,
@@ -201,6 +203,7 @@ export async function createTextShare(input: TextShareInput): Promise<{
         common.wrapNonce,
         common.kdfJson,
         hashToken(manageToken),
+        input.ownerHash ?? null,
         payload.length,
       ],
     );
@@ -256,8 +259,8 @@ export async function createFileShare(input: FileShareInput): Promise<{
         id, kind, status, created_at, start_at, expires_at, max_views, views,
         chunk_size, chunk_count, nonce_prefix, file_id,
         password_salt, password_verifier, wrapped_key, wrap_nonce, kdf_params,
-        manage_token_hash, upload_token_hash, blob_bytes
-      ) VALUES (?, 'file', 'draft', ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`,
+        manage_token_hash, telegram_user_hash, upload_token_hash, blob_bytes
+      ) VALUES (?, 'file', 'draft', ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`,
       params: [
         input.id,
         now,
@@ -274,6 +277,7 @@ export async function createFileShare(input: FileShareInput): Promise<{
         common.wrapNonce,
         common.kdfJson,
         hashToken(manageToken),
+        input.ownerHash ?? null,
         hashToken(uploadToken),
       ],
     },

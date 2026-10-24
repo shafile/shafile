@@ -20,6 +20,7 @@ export default defineConfig({
         timeout: 120_000,
         env: {
           IP_HASH_SECRET: `e2e-${Date.now()}`,
+          TELEGRAM_BOT_TOKEN: "e2e-telegram-bot-token",
         },
       },
   projects: [

@@ -70,3 +70,18 @@ export type ManagedShare = LookupResult & {
   link: string;
   password?: string;
 };
+
+export type TelegramSessionResponse = {
+  token: string;
+  expiresIn: number;
+};
+
+export type TelegramSharesResponse = {
+  items: LookupResult[];
+  serverNow: number;
+};
+
+export type TelegramAdoptResponse = {
+  linked: number;
+  skipped: number;
+};
