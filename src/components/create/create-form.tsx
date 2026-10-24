@@ -10,11 +10,11 @@ import {
 import Link from "next/link";
 import {
   AlertTriangle,
-  ArrowRight,
   CalendarClock,
   CheckCircle2,
   Eye,
   EyeOff,
+  ExternalLink,
   FileUp,
   KeyRound,
   Link2,
@@ -449,7 +449,7 @@ export function CreateForm({ maxFileBytes }: { maxFileBytes: number }) {
           link: result.link,
           password: result.password,
         })
-      : t("inviteWithoutPassword", { link: result.link });
+      : "";
 
     return (
       <div className="container-page max-w-4xl py-10 sm:py-14">
@@ -482,7 +482,18 @@ export function CreateForm({ maxFileBytes }: { maxFileBytes: number }) {
                   >
                     {result.link}
                   </code>
-                  <CopyButton value={result.link} label={t("linkLabel")} />
+                  <div className="flex gap-2">
+                    <CopyButton value={result.link} label={t("linkLabel")} />
+                    <Link
+                      href={result.link}
+                      target="_blank"
+                      className="icon-button"
+                      aria-label={t("openShare")}
+                      title={t("openShare")}
+                    >
+                      <ExternalLink size={16} />
+                    </Link>
+                  </div>
                 </div>
               </div>
 
@@ -499,7 +510,17 @@ export function CreateForm({ maxFileBytes }: { maxFileBytes: number }) {
                     >
                       {result.password}
                     </code>
-                    <CopyButton value={result.password} label={t("passwordLabelResult")} />
+                    <div className="flex flex-wrap gap-2">
+                      <CopyButton
+                        value={result.password}
+                        label={t("passwordLabelResult")}
+                      />
+                      <CopyButton
+                        value={invite}
+                        label={t("copyInvite")}
+                        displayLabel={t("copyInvite")}
+                      />
+                    </div>
                   </div>
                 </div>
               )}
@@ -521,21 +542,12 @@ export function CreateForm({ maxFileBytes }: { maxFileBytes: number }) {
               </div>
 
               <div className="flex flex-wrap gap-2">
-                <CopyButton
-                  value={invite}
-                  label={t("copyInvite")}
-                  displayLabel={t("copyInvite")}
-                />
                 <ShareButton
                   url={result.link}
                   title={t("resultTitle")}
                   startParam={result.hasPassword ? result.id : undefined}
                   className="btn btn-accent btn-sm"
                 />
-                <Link href={result.link} target="_blank" className="btn btn-secondary btn-sm">
-                  {t("openShare")}
-                  <ArrowRight size={15} className="directional-icon" />
-                </Link>
               </div>
 
               <div className="space-y-2">
@@ -555,8 +567,6 @@ export function CreateForm({ maxFileBytes }: { maxFileBytes: number }) {
                     <span>{t("warningBurn")}</span>
                   </p>
                 )}
-                <p className="text-xs leading-5 text-muted">{t("warningServer")}</p>
-                <p className="text-xs leading-5 text-muted">{t("savedLocally")}</p>
               </div>
             </div>
 
