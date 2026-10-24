@@ -51,7 +51,8 @@
     "trust4": "Wir können ein verlorenes Passwort oder einen Link nicht wiederherstellen",
     "ctaTitle": "Bereit, wenn du es bist",
     "ctaDesc": "Erstelle eine Freigabe in wenigen Sekunden. Nichts zu installieren.",
-    "ctaButton": "Freigabe erstellen"
+    "ctaButton": "Freigabe erstellen",
+    "shareApp": "Shafile teilen"
   },
   "Create": {
     "title": "Private Freigabe erstellen",
@@ -200,7 +201,8 @@
     "passwordProtected": "Passwort",
     "scheduled": "Geplant",
     "viewsLabel": "Aufrufe",
-    "viewAgainHint": "Diese Freigabe hat noch Aufrufe übrig. Erneutes Öffnen verbraucht einen weiteren."
+    "viewAgainHint": "Diese Freigabe hat noch Aufrufe übrig. Erneutes Öffnen verbraucht einen weiteren.",
+    "keyMissingTelegramDesc": "Dieser Mini-App-Link enthält keinen Entschlüsselungsschlüssel. Verwende den ursprünglichen Freigabelink des Erstellers."
   },
   "Manage": {
     "title": "Meine Freigaben",

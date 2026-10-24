@@ -51,7 +51,8 @@
     "trust4": "We cannot recover a lost password or link",
     "ctaTitle": "Ready when you are",
     "ctaDesc": "Create a share in a few seconds. Nothing to install.",
-    "ctaButton": "Create a share"
+    "ctaButton": "Create a share",
+    "shareApp": "Share Shafile"
   },
   "Create": {
     "title": "Create a private share",
@@ -200,7 +201,8 @@
     "passwordProtected": "Password",
     "scheduled": "Scheduled",
     "viewsLabel": "Views",
-    "viewAgainHint": "This share has more views left. Opening it again will use another one."
+    "viewAgainHint": "This share has more views left. Opening it again will use another one.",
+    "keyMissingTelegramDesc": "This Mini App link does not include the decryption key. Use the original share link from the creator."
   },
   "Manage": {
     "title": "My shares",

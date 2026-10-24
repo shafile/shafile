@@ -85,3 +85,9 @@ export type TelegramAdoptResponse = {
   linked: number;
   skipped: number;
 };
+
+export type TelegramAppLinkResponse = {
+  url: string | null;
+  botUsername: string | null;
+  shortName: string;
+};

@@ -51,7 +51,8 @@
     "trust4": "无法找回丢失的密码或链接",
     "ctaTitle": "随时可以开始",
     "ctaDesc": "几秒内创建一个分享，无需安装任何东西。",
-    "ctaButton": "创建分享"
+    "ctaButton": "创建分享",
+    "shareApp": "分享 Shafile"
   },
   "Create": {
     "title": "创建私密分享",
@@ -200,7 +201,8 @@
     "passwordProtected": "密码",
     "scheduled": "定时",
     "viewsLabel": "查看次数",
-    "viewAgainHint": "这个分享还有剩余查看次数，再次打开会再消耗一次。"
+    "viewAgainHint": "这个分享还有剩余查看次数，再次打开会再消耗一次。",
+    "keyMissingTelegramDesc": "此 Mini App 链接不包含解密密钥，请使用创建者发送的原始分享链接。"
   },
   "Manage": {
     "title": "我的分享",

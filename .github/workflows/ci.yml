@@ -117,6 +117,8 @@ jobs:
           CRON_SECRET=ci-cron-secret-0123456789
           TELEGRAM_BOT_TOKEN=e2e-telegram-bot-token
           TELEGRAM_WEBHOOK_SECRET=e2e-telegram-webhook-secret
+          TELEGRAM_BOT_USERNAME=e2e_telegram_bot
+          TELEGRAM_MINI_APP_SHORT_NAME=shafile
           EOF
 
       - name: Run Worker end-to-end tests

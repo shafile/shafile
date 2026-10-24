@@ -529,6 +529,7 @@ export function CreateForm({ maxFileBytes }: { maxFileBytes: number }) {
                 <ShareButton
                   url={result.link}
                   title={t("resultTitle")}
+                  startParam={result.hasPassword ? result.id : undefined}
                   className="btn btn-accent btn-sm"
                 />
                 <Link href={result.link} target="_blank" className="btn btn-secondary btn-sm">

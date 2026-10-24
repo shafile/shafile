@@ -3,15 +3,24 @@
 import { useEffect, useState } from "react";
 import { Share2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { canShareLink, shareLink } from "@/lib/client/telegram";
+import { SHARE_ID_PATTERN } from "@/lib/shared/limits";
+import {
+  buildMiniAppShareUrl,
+  canShareLink,
+  getTelegramAppShareUrl,
+  isTelegramLaunch,
+  shareLink,
+} from "@/lib/client/telegram";
 
 export function ShareButton({
   url,
   title,
+  startParam,
   className = "btn btn-secondary btn-sm",
 }: {
   url: string;
   title: string;
+  startParam?: string;
   className?: string;
 }) {
   const t = useTranslations("Common");
@@ -21,6 +30,15 @@ export function ShareButton({
     setAvailable(canShareLink());
   }, []);
 
+  async function handleShare(): Promise<void> {
+    let target = url;
+    if (startParam && SHARE_ID_PATTERN.test(startParam) && isTelegramLaunch()) {
+      const base = await getTelegramAppShareUrl();
+      if (base) target = buildMiniAppShareUrl(base, startParam);
+    }
+    await shareLink(target, title);
+  }
+
   if (!available) return null;
 
   return (
@@ -28,7 +46,7 @@ export function ShareButton({
       type="button"
       className={className}
       onClick={() => {
-        void shareLink(url, title).catch(() => undefined);
+        void handleShare().catch(() => undefined);
       }}
     >
       <Share2 size={15} />
