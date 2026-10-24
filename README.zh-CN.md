@@ -106,6 +106,7 @@ GitHub Actions（`.github/workflows/ci.yml`）会运行 lint、类型检查、i1
 | `TELEGRAM_BOT_TOKEN` | —                     | 启用 Telegram `initData` 会话交换 |
 | `TELEGRAM_SESSION_SECRET` | 由 `TICKET_SECRET` 派生 | Telegram 会话令牌 HMAC 密钥 |
 | `TELEGRAM_HASH_SECRET` | 由 `TICKET_SECRET` 派生 | Telegram 用户 ID 哈希密钥 |
+| `TELEGRAM_WEBHOOK_SECRET` | — | Telegram Bot Webhook 校验密钥 |
 | `MAX_SHARE_BYTES`   | 5 GiB                  | 单文件上限            |
 | `MAX_STORAGE_BYTES` | 50 GiB                 | 总存储上限            |
 | `TRUST_PROXY`       | `false`                | 反向代理后设为 `true` |

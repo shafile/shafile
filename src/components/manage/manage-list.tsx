@@ -27,6 +27,7 @@ import { formatDateTime, formatNumber } from "@/lib/client/format";
 import { CopyButton } from "@/components/ui/copy-button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ErrorNotice } from "@/components/ui/error-notice";
+import { ShareButton } from "@/components/ui/share-button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { TelegramShares } from "./telegram-shares";
 
@@ -353,6 +354,7 @@ export function ManageList() {
                     <div className="flex flex-wrap items-center gap-2">
                       {entry.link && (
                         <>
+                          <ShareButton url={entry.link} title={t("title")} />
                           <CopyButton value={entry.link} label={t("copyLink")} displayLabel={t("copyLink")} />
                           <Link
                             href={entry.link}

@@ -526,9 +526,11 @@ export function CreateForm({ maxFileBytes }: { maxFileBytes: number }) {
                   label={t("copyInvite")}
                   displayLabel={t("copyInvite")}
                 />
-                {!result.hasPassword && (
-                  <ShareButton url={result.link} title={t("resultTitle")} />
-                )}
+                <ShareButton
+                  url={result.link}
+                  title={t("resultTitle")}
+                  className="btn btn-accent btn-sm"
+                />
                 <Link href={result.link} target="_blank" className="btn btn-secondary btn-sm">
                   {t("openShare")}
                   <ArrowRight size={15} className="directional-icon" />

@@ -19,7 +19,39 @@ The app is embedded by Telegram Web, so the CSP `frame-ancestors` allowlist in `
 - Theme colors, Telegram chrome colors, safe-area insets, the back button, haptics, and closing confirmation are wired through `src/lib/client/telegram.ts` and `src/components/telegram-bridge.tsx`.
 - External Markdown links open with `Telegram.WebApp.openLink`.
 - Link shares keep the `#k=` key when Telegram appends launch parameters to the fragment.
-- On the home page, a first launch without a locale cookie adopts the Telegram user's language when it maps to a supported locale.
+- On the home page, a first launch without a locale cookie follows the browser language; the Telegram client language is not used as a locale override.
+
+## Bot metadata
+
+The bot is metadata-only. It never decrypts content and never uses the `#k` fragment.
+
+- `/start` replies with an **Open Shafile** Mini App button.
+- `/info <share id or link>` replies with the share type, status, start/expiry, view count, and password flag.
+- The bot replies in English or Simplified Chinese based on the sender's Telegram language.
+- If a message contains `#k=`, the bot warns the user to send only the share ID. The route does not log or store the message.
+
+### Setup
+
+1. Set `TELEGRAM_BOT_TOKEN`.
+2. Set `TELEGRAM_WEBHOOK_SECRET` to a random value.
+3. Deploy the Worker so `/api/telegram/webhook` exists.
+4. Register the webhook:
+
+```bash
+curl -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook" \
+  -H "Content-Type: application/json" \
+  -d "{\"url\":\"https://your-host/api/telegram/webhook\",\"secret_token\":\"${TELEGRAM_WEBHOOK_SECRET}\",\"allowed_updates\":[\"message\"]}"
+```
+
+5. Optionally register commands:
+
+```bash
+curl -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setMyCommands" \
+  -H "Content-Type: application/json" \
+  -d '{"commands":[{"command":"start","description":"Open Shafile"},{"command":"info","description":"Check a share"}]}'
+```
+
+The webhook secret is checked against the `X-Telegram-Bot-Api-Secret-Token` header. The bot does not store messages or share keys.
 
 ## Manual device matrix
 
