@@ -51,7 +51,8 @@
     "trust4": "Nous ne pouvons pas récupérer un mot de passe ou un lien perdu",
     "ctaTitle": "Prêt quand vous l’êtes",
     "ctaDesc": "Créez un partage en quelques secondes. Rien à installer.",
-    "ctaButton": "Créer un partage"
+    "ctaButton": "Créer un partage",
+    "shareApp": "Partager Shafile"
   },
   "Create": {
     "title": "Créer un partage privé",
@@ -200,7 +201,8 @@
     "passwordProtected": "Mot de passe",
     "scheduled": "Programmé",
     "viewsLabel": "Consultations",
-    "viewAgainHint": "Ce partage a encore des consultations. L’ouvrir à nouveau en consommera une autre."
+    "viewAgainHint": "Ce partage a encore des consultations. L’ouvrir à nouveau en consommera une autre.",
+    "keyMissingTelegramDesc": "Ce lien Mini App ne contient pas la clé de déchiffrement. Utilisez le lien de partage d'origine fourni par le créateur."
   },
   "Manage": {
     "title": "Mes partages",

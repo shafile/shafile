@@ -354,7 +354,11 @@ export function ManageList() {
                     <div className="flex flex-wrap items-center gap-2">
                       {entry.link && (
                         <>
-                          <ShareButton url={entry.link} title={t("title")} />
+                          <ShareButton
+                            url={entry.link}
+                            title={t("title")}
+                            startParam={entry.hasPassword ? entry.id : undefined}
+                          />
                           <CopyButton value={entry.link} label={t("copyLink")} displayLabel={t("copyLink")} />
                           <Link
                             href={entry.link}

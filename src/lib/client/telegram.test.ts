@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildMiniAppShareUrl,
   buildTelegramTheme,
   isWebUrl,
   telegramShareUrl,
@@ -63,6 +64,17 @@ describe("telegram share url", () => {
   it("keeps the fragment key encoded", () => {
     expect(telegramShareUrl("https://shafile.test/s/abc#k=secret")).toBe(
       "https://t.me/share/url?url=https%3A%2F%2Fshafile.test%2Fs%2Fabc%23k%3Dsecret",
+    );
+  });
+
+  it("adds a startapp parameter to a mini app link", () => {
+    expect(
+      buildMiniAppShareUrl(
+        "https://t.me/shafiledev_bot/shafile",
+        "AAAAAAAAAAAAAAAAAAAAAA",
+      ),
+    ).toBe(
+      "https://t.me/shafiledev_bot/shafile?startapp=AAAAAAAAAAAAAAAAAAAAAA",
     );
   });
 });

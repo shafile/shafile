@@ -51,7 +51,8 @@
     "trust4": "No podemos recuperar una contraseña o un enlace perdido",
     "ctaTitle": "Listo cuando tú lo estés",
     "ctaDesc": "Crea un enlace en unos segundos. No hay nada que instalar.",
-    "ctaButton": "Crear un enlace"
+    "ctaButton": "Crear un enlace",
+    "shareApp": "Compartir Shafile"
   },
   "Create": {
     "title": "Crear un enlace privado",
@@ -200,7 +201,8 @@
     "passwordProtected": "Contraseña",
     "scheduled": "Programado",
     "viewsLabel": "Visualizaciones",
-    "viewAgainHint": "Este enlace aún tiene visualizaciones disponibles. Abrirlo de nuevo consumirá otra."
+    "viewAgainHint": "Este enlace aún tiene visualizaciones disponibles. Abrirlo de nuevo consumirá otra.",
+    "keyMissingTelegramDesc": "Este enlace de Mini App no incluye la clave de descifrado. Usa el enlace original que envió el creador."
   },
   "Manage": {
     "title": "Mis enlaces",

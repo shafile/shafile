@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { SHARE_ID_PATTERN } from "@/lib/shared/limits";
 import {
   applyTelegramTheme,
   getTelegramWebApp,
@@ -13,6 +14,7 @@ export function TelegramBridge() {
   const pathname = usePathname();
   const router = useRouter();
   const [ready, setReady] = useState(false);
+  const startHandled = useRef(false);
 
   useEffect(() => {
     if (!isTelegramLaunch()) return;
@@ -50,6 +52,25 @@ export function TelegramBridge() {
       twa?.offEvent?.("contentSafeAreaChanged", refreshTheme);
     };
   }, []);
+
+  useEffect(() => {
+    if (startHandled.current || pathname !== "/") return;
+    const queryParam = new URLSearchParams(window.location.search).get(
+      "tgWebAppStartParam",
+    );
+    const hashParam = new URLSearchParams(
+      window.location.hash.replace(/^#/, ""),
+    ).get("tgWebAppStartParam");
+    const initParam = ready
+      ? getTelegramWebApp()?.initDataUnsafe?.start_param
+      : null;
+    const candidate = [queryParam, hashParam, initParam].find(
+      (value) => value && SHARE_ID_PATTERN.test(value),
+    );
+    if (!candidate) return;
+    startHandled.current = true;
+    router.replace(`/s/${encodeURIComponent(candidate)}?via=tg`);
+  }, [ready, pathname, router]);
 
   useEffect(() => {
     if (!ready) return;

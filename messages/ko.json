@@ -51,7 +51,8 @@
     "trust4": "잃어버린 비밀번호나 링크는 복구할 수 없습니다",
     "ctaTitle": "준비되면 시작하세요",
     "ctaDesc": "몇 초 만에 공유를 만드세요. 설치할 것이 없습니다.",
-    "ctaButton": "공유 만들기"
+    "ctaButton": "공유 만들기",
+    "shareApp": "Shafile 공유"
   },
   "Create": {
     "title": "비공개 공유 만들기",
@@ -200,7 +201,8 @@
     "passwordProtected": "비밀번호",
     "scheduled": "예약됨",
     "viewsLabel": "조회",
-    "viewAgainHint": "남은 조회가 있습니다. 다시 열면 한 번 더 사용됩니다."
+    "viewAgainHint": "남은 조회가 있습니다. 다시 열면 한 번 더 사용됩니다.",
+    "keyMissingTelegramDesc": "이 Mini App 링크에는 복호화 키가 없습니다. 만든 사람이 보낸 원래 공유 링크를 사용하세요."
   },
   "Manage": {
     "title": "내 공유",
