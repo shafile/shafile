@@ -116,6 +116,39 @@ export function formatShareInfo(
   return lines.join("\n");
 }
 
+export function openMiniAppButtonLabel(locale: BotLocale): string {
+  return locale === "zh" ? "打开 Mini App" : "Open Mini App";
+}
+
+export function sharePromptText(
+  meta: ShareMeta,
+  locale: BotLocale,
+  canDeepLink: boolean,
+): string {
+  if (meta.hasPassword) {
+    const zh = locale === "zh";
+    const text = zh
+      ? "🔒 已收到加密分享。打开 Mini App 待解密查看，密码请向发送者另行确认。"
+      : "🔒 Encrypted share received. Open the Mini App to decrypt and view. Ask the sender for the password separately.";
+    return canDeepLink
+      ? text
+      : `${text}\n${zh ? "Mini App 链接未配置。" : "The Mini App link is not configured."}`;
+  }
+  return linkSharePromptText(locale);
+}
+
+export function linkSharePromptText(locale: BotLocale): string {
+  return locale === "zh"
+    ? "🔒 已收到链接模式分享。请使用原始链接在浏览器中解密查看；Mini App 深链无法携带解密密钥。"
+    : "🔒 Link-mode share received. Open the original link in a browser to decrypt. Mini App start links cannot carry the decryption key.";
+}
+
+export function linkShareIdPromptText(locale: BotLocale): string {
+  return locale === "zh"
+    ? "🔒 此链接模式分享需要包含解密密钥的原始链接，Bot 无法仅凭 ID 打开。"
+    : "🔒 This link-mode share needs the original link with its decryption key. The bot cannot open it from the ID alone.";
+}
+
 export function usageText(locale: BotLocale): string {
   return locale === "zh"
     ? "用法：发送 /info <分享 ID 或链接> 查询状态。Bot 只能读取元数据，不能解密内容。"

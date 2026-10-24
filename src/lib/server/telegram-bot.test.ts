@@ -3,8 +3,12 @@ import type { ShareMeta } from "@/lib/shared/types";
 import {
   botLocale,
   formatShareInfo,
+  linkShareIdPromptText,
+  linkSharePromptText,
+  openMiniAppButtonLabel,
   parseCommand,
   parseShareId,
+  sharePromptText,
   startText,
   usageText,
 } from "./telegram-bot";
@@ -86,5 +90,14 @@ describe("telegram bot replies", () => {
     expect(startText("en")).toContain("end-to-end encrypted");
     expect(startText("zh")).toContain("端到端加密");
     expect(usageText("en")).toContain("/info");
+  });
+
+  it("builds a pending-decryption prompt for password shares", () => {
+    expect(sharePromptText(meta, "en", true)).toContain("Open the Mini App");
+    expect(sharePromptText(meta, "en", false)).toContain("not configured");
+    expect(sharePromptText(meta, "zh", true)).toContain("待解密查看");
+    expect(linkSharePromptText("en")).toContain("Open the original link");
+    expect(linkShareIdPromptText("en")).toContain("needs the original link");
+    expect(openMiniAppButtonLabel("en")).toBe("Open Mini App");
   });
 });
