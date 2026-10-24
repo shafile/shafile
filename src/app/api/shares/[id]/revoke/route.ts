@@ -5,6 +5,7 @@ import {
   readJsonLimited,
   routeError,
 } from "@/lib/server/http";
+import { optionalTelegramSession } from "@/lib/server/auth";
 import { consumeRateLimit, rateLimitKey } from "@/lib/server/rate-limit";
 import { maybePurge, revokeShare } from "@/lib/server/shares";
 import { AppError } from "@/lib/server/http";
@@ -13,7 +14,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const schema = z.object({
-  manageToken: z.string().min(10).max(128),
+  manageToken: z.string().min(10).max(128).optional(),
 });
 
 export async function POST(
@@ -30,10 +31,11 @@ export async function POST(
     );
     if (!limit.allowed) throw new AppError("RATE_LIMITED", 429);
 
+    const session = optionalTelegramSession(request);
     const parsed = schema.safeParse(await readJsonLimited(request, 4096));
     if (!parsed.success) throw new AppError("INVALID_REQUEST", 400);
 
-    await revokeShare(id, parsed.data.manageToken);
+    await revokeShare(id, parsed.data.manageToken ?? null, session?.uid ?? null);
     try {
       await maybePurge(id);
     } catch (error) {

@@ -115,6 +115,7 @@ jobs:
           TICKET_SECRET=ci-ticket-secret-0123456789
           IP_HASH_SECRET=ci-ip-secret-0123456789
           CRON_SECRET=ci-cron-secret-0123456789
+          TELEGRAM_BOT_TOKEN=e2e-telegram-bot-token
           EOF
 
       - name: Run Worker end-to-end tests

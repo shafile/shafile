@@ -38,6 +38,74 @@ type AccessPayload = {
   exp: number;
 };
 
+export const TELEGRAM_SESSION_TTL_MS = 60 * 60 * 1000;
+
+type TelegramSessionPayload = {
+  v: 1;
+  uid: string;
+  exp: number;
+};
+
+function signTelegramSession(encoded: string): string {
+  return bytesToBase64Url(
+    new Uint8Array(
+      createHmac("sha256", getSecrets().telegramSessionSecret)
+        .update(`shafile/v1/telegram-session:${encoded}`)
+        .digest(),
+    ),
+  );
+}
+
+export function createTelegramSessionToken(
+  userHash: string,
+  now = Date.now(),
+): string {
+  const payload: TelegramSessionPayload = {
+    v: 1,
+    uid: userHash,
+    exp: now + TELEGRAM_SESSION_TTL_MS,
+  };
+  const encoded = bytesToBase64Url(utf8(JSON.stringify(payload)));
+  return `${encoded}.${signTelegramSession(encoded)}`;
+}
+
+export function verifyTelegramSessionToken(
+  token: string,
+  now = Date.now(),
+): TelegramSessionPayload | null {
+  const [encoded, signature] = token.split(".");
+  if (!encoded || !signature) return null;
+
+  let actual: Uint8Array;
+  try {
+    actual = base64UrlToBytes(signature);
+  } catch {
+    return null;
+  }
+  if (!safeEqual(actual, base64UrlToBytes(signTelegramSession(encoded)))) {
+    return null;
+  }
+
+  try {
+    const payload = JSON.parse(
+      fromUtf8(base64UrlToBytes(encoded)),
+    ) as TelegramSessionPayload;
+    if (
+      payload.v !== 1 ||
+      typeof payload.uid !== "string" ||
+      payload.uid.length < 16 ||
+      payload.uid.length > 128 ||
+      !Number.isFinite(payload.exp) ||
+      payload.exp <= now
+    ) {
+      return null;
+    }
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
 export function createAccessToken(shareId: string, now = Date.now()): string {
   const payload: AccessPayload = {
     v: 1,

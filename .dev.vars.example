@@ -4,3 +4,7 @@ TRUST_PROXY=true
 TICKET_SECRET=replace-with-a-random-secret
 IP_HASH_SECRET=replace-with-a-random-secret
 CRON_SECRET=replace-with-a-random-secret
+# 可选：Telegram initData 会话交换（P1a）
+# TELEGRAM_BOT_TOKEN=
+# TELEGRAM_SESSION_SECRET=
+# TELEGRAM_HASH_SECRET=

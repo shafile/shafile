@@ -40,8 +40,10 @@ export function LocaleSwitcher() {
       setOpen(false);
       return;
     }
-    const secure = window.location.protocol === "https:" ? "; Secure" : "";
-    document.cookie = `${localeCookieName}=${next}; Path=/; Max-Age=31536000; SameSite=Lax${secure}`;
+    const secure = window.location.protocol === "https:";
+    const embedded = window.self !== window.top;
+    const sameSite = embedded && secure ? "None" : "Lax";
+    document.cookie = `${localeCookieName}=${next}; Path=/; Max-Age=31536000; SameSite=${sameSite}${secure ? "; Secure" : ""}`;
     document.documentElement.lang = localeMeta[next].htmlLang;
     document.documentElement.dir = localeMeta[next].dir;
     setOpen(false);

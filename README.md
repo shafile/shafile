@@ -40,6 +40,22 @@ Open <http://localhost:3000>. The first start creates:
 3. Create the share and copy the link. If you use password mode, send the password through a separate channel.
 4. The recipient opens the link in a browser to decrypt and view or download the content.
 
+### Telegram Mini App
+
+Shafile runs as a Telegram Mini App without extra configuration. Deploy it over HTTPS and set the Mini App URL in BotFather.
+
+- The Telegram SDK is loaded only when Telegram launch parameters are present. Normal web visits still load no third-party scripts. Inside Telegram, the official SDK is third-party code and runs with the same privileges as the app.
+- `initData` is validated server-side and share ownership is stored as a hashed Telegram user id. The manage page lists and revokes owned shares across devices and can link shares already stored in the current browser; link keys stay on the device that created them.
+- Telegram theme colors, safe-area insets, the back button, and success haptics are applied automatically.
+- Share links keep their `#k=` key when Telegram appends launch parameters to the URL fragment.
+- The Content Security Policy allows framing only from `telegram.org` and its subdomains; every other origin stays blocked.
+
+See [docs/telegram-mini-app.md](docs/telegram-mini-app.md) for setup and the device checklist, and [docs/telegram-identity-p1.md](docs/telegram-identity-p1.md) for the proposed identity design.
+
+### Mobile
+
+Mobile browsers get `viewport-fit=cover`, safe-area padding for notches and Telegram chrome, 44px touch targets, 16px form fields to prevent iOS zoom, and horizontally scrollable Markdown tables.
+
 ### Production deployment
 
 ```bash
@@ -87,6 +103,9 @@ Two supported paths:
 | `BLOB_DIR` | `$DATA_DIR/blobs` | Ciphertext directory |
 | `TICKET_SECRET` | auto-generated | Access-token HMAC secret |
 | `IP_HASH_SECRET` | auto-generated | Rate-limit IP hash secret |
+| `TELEGRAM_BOT_TOKEN` | — | Enables Telegram `initData` session exchange |
+| `TELEGRAM_SESSION_SECRET` | derived from `TICKET_SECRET` | Telegram session token HMAC secret |
+| `TELEGRAM_HASH_SECRET` | derived from `TICKET_SECRET` | Telegram user-id hash secret |
 | `MAX_SHARE_BYTES` | 5 GiB | Per-file limit |
 | `MAX_STORAGE_BYTES` | 50 GiB | Total storage limit |
 | `TRUST_PROXY` | `false` | Set to `true` behind a reverse proxy |

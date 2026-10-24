@@ -65,7 +65,12 @@ The Worker also runs the schema with `CREATE TABLE IF NOT EXISTS` on its first d
 pnpm exec wrangler secret put TICKET_SECRET
 pnpm exec wrangler secret put IP_HASH_SECRET
 pnpm exec wrangler secret put CRON_SECRET
+pnpm exec wrangler secret put TELEGRAM_BOT_TOKEN
+pnpm exec wrangler secret put TELEGRAM_SESSION_SECRET
+pnpm exec wrangler secret put TELEGRAM_HASH_SECRET
 ```
+
+The three Telegram secrets are optional; set them only when using Telegram identity. If `TELEGRAM_SESSION_SECRET` or `TELEGRAM_HASH_SECRET` is omitted, the Worker derives it from `TICKET_SECRET`. The session endpoint stays disabled until `TELEGRAM_BOT_TOKEN` is set.
 
 Generate each secret with a cryptographically secure random value, for example:
 

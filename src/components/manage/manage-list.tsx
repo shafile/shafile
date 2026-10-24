@@ -28,6 +28,7 @@ import { CopyButton } from "@/components/ui/copy-button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ErrorNotice } from "@/components/ui/error-notice";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { TelegramShares } from "./telegram-shares";
 
 type Entry = ManagedShare;
 
@@ -46,6 +47,7 @@ export function ManageList() {
   const [revoking, setRevoking] = useState<string | null>(null);
   const [confirmRevoke, setConfirmRevoke] = useState<Entry | null>(null);
   const [confirmClear, setConfirmClear] = useState(false);
+  const [remoteCount, setRemoteCount] = useState(0);
   const importedRef = useRef(false);
 
   const refresh = useCallback(
@@ -241,6 +243,11 @@ export function ManageList() {
             onChange={(event) => setImportValue(event.target.value)}
             placeholder={t("importPlaceholder")}
             aria-label={t("importTitle")}
+            inputMode="url"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            enterKeyHint="go"
           />
           <button
             type="button"
@@ -259,17 +266,19 @@ export function ManageList() {
           {common("loading")}
         </div>
       ) : entries.length === 0 ? (
-        <div className="card mt-8 flex flex-col items-center px-6 py-14 text-center">
-          <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-soft text-brand">
-            <ShieldCheck size={30} />
-          </span>
-          <h2 className="mt-5 text-xl font-bold">{t("emptyTitle")}</h2>
-          <p className="mt-2 max-w-md text-sm leading-6 text-muted">{t("emptyDesc")}</p>
-          <Link href="/create" className="btn btn-accent mt-5">
-            <Plus size={16} />
-            {t("create")}
-          </Link>
-        </div>
+        remoteCount === 0 ? (
+          <div className="card mt-8 flex flex-col items-center px-6 py-14 text-center">
+            <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-soft text-brand">
+              <ShieldCheck size={30} />
+            </span>
+            <h2 className="mt-5 text-xl font-bold">{t("emptyTitle")}</h2>
+            <p className="mt-2 max-w-md text-sm leading-6 text-muted">{t("emptyDesc")}</p>
+            <Link href="/create" className="btn btn-accent mt-5">
+              <Plus size={16} />
+              {t("create")}
+            </Link>
+          </div>
+        ) : null
       ) : (
         <div className="mt-8 space-y-3">
           <div className="flex items-center justify-between gap-2 text-xs text-muted">
@@ -380,6 +389,14 @@ export function ManageList() {
           <p className="px-1 text-xs text-muted">{t("keyWarning")}</p>
         </div>
       )}
+
+      <TelegramShares
+        localShares={entries.map((entry) => ({
+          id: entry.id,
+          manageToken: entry.manageToken,
+        }))}
+        onCountChange={setRemoteCount}
+      />
 
       <ConfirmDialog
         open={confirmRevoke !== null}

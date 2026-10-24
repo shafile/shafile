@@ -1,6 +1,7 @@
 {
   "Common": {
     "appName": "Shafile",
+    "share": "Partager",
     "tagline": "Partage chiffré de bout en bout",
     "navCreate": "Créer",
     "navManage": "Mes partages",
@@ -237,7 +238,13 @@
     "passwordProtected": "Protégé par mot de passe",
     "remaining": "Restant",
     "open": "Ouvrir",
-    "keyWarning": "Les liens copiés ici contiennent la clé de déchiffrement."
+    "keyWarning": "Les liens copiés ici contiennent la clé de déchiffrement.",
+    "telegramTitle": "Compte Telegram",
+    "telegramDesc": "Partages créés lors d'une connexion Telegram. Les clés de lien restent sur l'appareil qui les a créés.",
+    "telegramAdopt": "Lier les partages de ce navigateur",
+    "telegramAdoptHint": "Associez les partages stockés dans ce navigateur à votre compte Telegram pour les gérer depuis d'autres appareils. Les clés de lien restent sur cet appareil.",
+    "telegramAdoptSuccess": "{count} partages associés à Telegram.",
+    "telegramAdoptPartial": "{linked} associés, {skipped} ignorés."
   },
   "Status": {
     "ready": "Prêt",
@@ -276,7 +283,9 @@
     "EMPTY_TEXT": "La note est vide.",
     "FILE_REQUIRED": "Choisissez d’abord un fichier.",
     "INTERNAL_ERROR": "Une erreur est survenue sur le serveur.",
-    "FILE_MISSING": "Le fichier chiffré est absent du serveur."
+    "FILE_MISSING": "Le fichier chiffré est absent du serveur.",
+    "TELEGRAM_AUTH_FAILED": "Telegram n'a pas pu vérifier cette session. Rouvrez la Mini App et réessayez.",
+    "TELEGRAM_NOT_CONFIGURED": "La connexion Telegram n'est pas configurée sur ce serveur."
   },
   "Meta": {
     "title": "Shafile — partage de fichiers et de textes chiffré de bout en bout",

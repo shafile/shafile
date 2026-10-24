@@ -1,5 +1,63 @@
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, createHmac, randomBytes } from "node:crypto";
 import { expect, test, type Page } from "@playwright/test";
+
+const TELEGRAM_BOT_TOKEN = "e2e-telegram-bot-token";
+
+async function installTelegramMock(page: Page, initData: string): Promise<void> {
+  await page.addInitScript((data: string) => {
+    (window as unknown as { Telegram: unknown }).Telegram = {
+      WebApp: {
+        initData: data,
+        initDataUnsafe: { user: { language_code: "en" } },
+        colorScheme: "light",
+        themeParams: { bg_color: "#ffffff", text_color: "#000000" },
+        ready() {},
+        expand() {},
+        onEvent() {},
+        offEvent() {},
+        openTelegramLink() {},
+        openLink() {},
+        BackButton: {
+          show() {},
+          hide() {},
+          onClick() {},
+          offClick() {},
+        },
+      },
+    };
+  }, initData);
+}
+
+function randomTelegramUserId(): number {
+  return Math.floor(Math.random() * 1_000_000_000) + 1;
+}
+
+function createTelegramInitData(
+  authDate = Math.floor(Date.now() / 1000),
+  userId = 123456789,
+): string {
+  const params = new URLSearchParams({
+    auth_date: String(authDate),
+    query_id: "AAH-e2e",
+    user: JSON.stringify({
+      id: userId,
+      first_name: "E2E",
+      language_code: "en",
+    }),
+  });
+  const dataCheckString = [...params.entries()]
+    .sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0))
+    .map(([key, value]) => `${key}=${value}`)
+    .join("\n");
+  const secret = createHmac("sha256", "WebAppData")
+    .update(TELEGRAM_BOT_TOKEN)
+    .digest();
+  params.set(
+    "hash",
+    createHmac("sha256", secret).update(dataCheckString).digest("hex"),
+  );
+  return params.toString();
+}
 
 async function createTextShare(
   page: Page,
@@ -38,6 +96,19 @@ test("one-time text share is decrypted in the browser and then burned", async ({
 
   await page.reload();
   await expect(page.getByText("Burned after reading")).toBeVisible();
+});
+
+test("fenced code blocks are highlighted after decryption", async ({ page }) => {
+  const link = await createTextShare(
+    page,
+    "# Code\n\n```js\nconst answer = 42;\n```",
+    { views: "3" },
+  );
+
+  await page.goto(link);
+  await page.getByTestId("view-text").click();
+  await expect(page.locator(".markdown-body pre code.hljs")).toBeVisible();
+  await expect(page.locator(".hljs-keyword").first()).toHaveText("const");
 });
 
 test("password share rejects a wrong password and does not burn a view", async ({
@@ -262,5 +333,426 @@ test.describe("arabic locale", () => {
     await expect(page.getByRole("heading", { level: 1 })).toContainText(
       "Share it once",
     );
+  });
+});
+
+test.describe("mobile layout", () => {
+  test.use({
+    viewport: { width: 320, height: 700 },
+    hasTouch: true,
+    isMobile: true,
+    locale: "fr-FR",
+  });
+
+  test("pages fit the viewport without horizontal scrolling", async ({ page }) => {
+    for (const path of ["/", "/create", "/manage"]) {
+      await page.goto(path);
+      await expect(page.locator("h1").first()).toBeVisible();
+      const overflow = await page.evaluate(
+        () =>
+          document.documentElement.scrollWidth -
+          document.documentElement.clientWidth,
+      );
+      expect(overflow).toBeLessThanOrEqual(1);
+    }
+  });
+});
+
+test.describe("telegram mini app", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      (window as unknown as { Telegram: unknown }).Telegram = {
+        WebApp: {
+          initData: "query_id=test&user=%7B%22language_code%22%3A%22en%22%7D",
+          colorScheme: "dark",
+          themeParams: {
+            bg_color: "#101418",
+            secondary_bg_color: "#1b2228",
+            text_color: "#f5f5f5",
+            hint_color: "#a0a8ae",
+            link_color: "#6ab3f3",
+            button_color: "#3390ec",
+            button_text_color: "#ffffff",
+          },
+          safeAreaInset: { top: 52, bottom: 24, left: 0, right: 0 },
+          contentSafeAreaInset: { top: 0, bottom: 0, left: 0, right: 0 },
+          ready() {},
+          expand() {},
+          onEvent() {},
+          offEvent() {},
+          openTelegramLink() {},
+          openLink(url: string) {
+            (window as unknown as { __tgLink?: string }).__tgLink = url;
+          },
+          setHeaderColor(color: string) {
+            (window as unknown as { __tgHeader?: string }).__tgHeader = color;
+          },
+          setBackgroundColor(color: string) {
+            (window as unknown as { __tgBackground?: string }).__tgBackground =
+              color;
+          },
+          enableClosingConfirmation() {},
+          disableClosingConfirmation() {},
+          BackButton: {
+            show() {},
+            hide() {},
+            onClick() {},
+            offClick() {},
+          },
+        },
+      };
+    });
+  });
+
+  test("applies the telegram theme and safe areas", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.locator("html")).toHaveAttribute("data-tg", "1");
+    await expect(page.locator("html")).toHaveAttribute("data-tg-ready", "1");
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+    await expect(page.locator(".theme-toggle")).toBeHidden();
+
+    const values = await page.evaluate(() => {
+      const style = getComputedStyle(document.documentElement);
+      return {
+        background: style.getPropertyValue("--background").trim(),
+        safeTop: style.getPropertyValue("--tg-safe-top").trim(),
+        header: (window as unknown as { __tgHeader?: string }).__tgHeader,
+        chrome: (window as unknown as { __tgBackground?: string }).__tgBackground,
+      };
+    });
+    expect(values.background).toBe("#101418");
+    expect(values.safeTop).toBe("52px");
+    expect(values.header).toBe("#101418");
+    expect(values.chrome).toBe("#101418");
+  });
+
+  test("adopts the telegram language on first launch", async ({ page }) => {
+    await page.addInitScript(() => {
+      (
+        window as unknown as {
+          Telegram: {
+            WebApp: { initDataUnsafe: { user: { language_code: string } } };
+          };
+        }
+      ).Telegram.WebApp.initDataUnsafe = {
+        user: { language_code: "ru" },
+      };
+    });
+
+    await page.goto("/");
+    await expect(page.locator("html")).toHaveAttribute("lang", "ru");
+    await expect(page.locator("html")).toHaveAttribute("dir", "ltr");
+  });
+
+  test("keeps the share key readable with telegram hash parameters", async ({
+    page,
+  }) => {
+    const link = await createTextShare(page, "Telegram note", { views: "3" });
+    await page.goto(`${link}&tgWebAppData=query_id%3D1&tgWebAppVersion=8.0`);
+    await expect(page.locator("html")).toHaveAttribute("data-tg", "1");
+    await page.getByTestId("view-text").click();
+    await expect(page.getByText("Telegram note")).toBeVisible();
+  });
+
+  test("shares a link through telegram", async ({ page }) => {
+    await createTextShare(page, "Telegram share", { views: "3" });
+    await page.evaluate(() => {
+      const app = (
+        window as unknown as {
+          Telegram: { WebApp: Record<string, unknown> };
+        }
+      ).Telegram.WebApp;
+      app.openTelegramLink = (url: string) => {
+        (window as unknown as { __tgShare: string }).__tgShare = url;
+      };
+    });
+
+    await page.getByRole("button", { name: "Share", exact: true }).click();
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () => (window as unknown as { __tgShare?: string }).__tgShare,
+        ),
+      )
+      .toContain("https://t.me/share/url?url=");
+  });
+
+  test("opens external markdown links inside telegram", async ({ page }) => {
+    const link = await createTextShare(
+      page,
+      "[Example](https://example.com/path?q=1)",
+    );
+    await page.goto(link);
+    await page.getByTestId("view-text").click();
+    const anchor = page.getByRole("link", { name: "Example" });
+    await expect(anchor).toBeVisible();
+    await anchor.click();
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () => (window as unknown as { __tgLink?: string }).__tgLink,
+        ),
+      )
+      .toBe("https://example.com/path?q=1");
+  });
+});
+
+test.describe("mobile share flow", () => {
+  test.use({
+    viewport: { width: 360, height: 740 },
+    hasTouch: true,
+    isMobile: true,
+    locale: "en-US",
+  });
+
+  test("creates and decrypts a share on a narrow screen", async ({ page }) => {
+    const link = await createTextShare(page, "Mobile note");
+    const overflow = await page.evaluate(
+      () =>
+        document.documentElement.scrollWidth -
+        document.documentElement.clientWidth,
+    );
+    expect(overflow).toBeLessThanOrEqual(1);
+
+    await page.goto(link);
+    await page.getByTestId("view-text").click();
+    await expect(page.locator(".markdown-body")).toContainText("Mobile note");
+  });
+});
+
+test.describe("telegram identity", () => {
+  test("exchanges valid initData for a session and rejects tampering", async ({
+    request,
+  }) => {
+    const userId = randomTelegramUserId();
+    const initData = createTelegramInitData(undefined, userId);
+    const response = await request.post("/api/telegram/session", {
+      data: { initData },
+    });
+    expect(response.status()).toBe(200);
+    const body = (await response.json()) as {
+      token?: string;
+      expiresIn?: number;
+    };
+    expect(body.token).toBeTruthy();
+    expect(body.expiresIn).toBe(3600);
+    expect(JSON.stringify(body)).not.toContain(initData);
+
+    const tampered = initData.replace(
+      encodeURIComponent(`"id":${userId}`),
+      encodeURIComponent(`"id":${userId + 1}`),
+    );
+    expect(tampered).not.toBe(initData);
+    const tamperedResponse = await request.post("/api/telegram/session", {
+      data: { initData: tampered },
+    });
+    expect(tamperedResponse.status()).toBe(401);
+
+    const stale = createTelegramInitData(
+      Math.floor((Date.now() - 25 * 60 * 60 * 1000) / 1000),
+      randomTelegramUserId(),
+    );
+    const staleResponse = await request.post("/api/telegram/session", {
+      data: { initData: stale },
+    });
+    expect(staleResponse.status()).toBe(401);
+  });
+
+  test("attaches ownership, lists, and revokes by session", async ({
+    request,
+  }) => {
+    const sessionResponse = await request.post("/api/telegram/session", {
+      data: {
+        initData: createTelegramInitData(undefined, randomTelegramUserId()),
+      },
+    });
+    expect(sessionResponse.status()).toBe(200);
+    const { token } = (await sessionResponse.json()) as { token: string };
+
+    const id = randomBytes(16).toString("base64url");
+    const payload = randomBytes(64).toString("base64url");
+    const created = await request.post("/api/shares", {
+      headers: { Authorization: `Bearer ${token}` },
+      data: {
+        kind: "text",
+        id,
+        startAt: null,
+        expiresAt: null,
+        maxViews: 3,
+        password: null,
+        payload,
+      },
+    });
+    expect(created.status()).toBe(201);
+
+    const listed = await request.get("/api/telegram/shares", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(listed.status()).toBe(200);
+    const listedBody = (await listed.json()) as {
+      items: { id: string; status: string }[];
+    };
+    expect(listedBody.items.some((item) => item.id === id)).toBe(true);
+
+    const otherSession = await request.post("/api/telegram/session", {
+      data: {
+        initData: createTelegramInitData(
+          undefined,
+          randomTelegramUserId(),
+        ),
+      },
+    });
+    const { token: otherToken } = (await otherSession.json()) as {
+      token: string;
+    };
+    const otherList = await request.get("/api/telegram/shares", {
+      headers: { Authorization: `Bearer ${otherToken}` },
+    });
+    const otherBody = (await otherList.json()) as {
+      items: { id: string }[];
+    };
+    expect(otherBody.items.some((item) => item.id === id)).toBe(false);
+
+    const forbidden = await request.post(`/api/shares/${id}/revoke`, {
+      headers: { Authorization: `Bearer ${otherToken}` },
+      data: {},
+    });
+    expect(forbidden.status()).toBe(403);
+
+    const revoked = await request.post(`/api/shares/${id}/revoke`, {
+      headers: { Authorization: `Bearer ${token}` },
+      data: {},
+    });
+    expect(revoked.status()).toBe(200);
+
+    const after = await request.get("/api/telegram/shares", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const afterBody = (await after.json()) as {
+      items: { id: string; status: string }[];
+    };
+    expect(
+      afterBody.items.find((item) => item.id === id)?.status,
+    ).toBe("revoked");
+  });
+
+  test("adopts an unowned share with a manage token", async ({ request }) => {
+    const userId = randomTelegramUserId();
+    const sessionResponse = await request.post("/api/telegram/session", {
+      data: { initData: createTelegramInitData(undefined, userId) },
+    });
+    const { token } = (await sessionResponse.json()) as { token: string };
+
+    const id = randomBytes(16).toString("base64url");
+    const created = await request.post("/api/shares", {
+      data: {
+        kind: "text",
+        id,
+        startAt: null,
+        expiresAt: null,
+        maxViews: 3,
+        password: null,
+        payload: randomBytes(64).toString("base64url"),
+      },
+    });
+    expect(created.status()).toBe(201);
+    const { manageToken } = (await created.json()) as {
+      manageToken: string;
+    };
+
+    const adopted = await request.post("/api/telegram/adopt", {
+      headers: { Authorization: `Bearer ${token}` },
+      data: { items: [{ id, manageToken }] },
+    });
+    expect(adopted.status()).toBe(200);
+    expect(await adopted.json()).toEqual({ linked: 1, skipped: 0 });
+
+    const listed = await request.get("/api/telegram/shares", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const listedBody = (await listed.json()) as {
+      items: { id: string }[];
+    };
+    expect(listedBody.items.some((item) => item.id === id)).toBe(true);
+
+    const otherSession = await request.post("/api/telegram/session", {
+      data: {
+        initData: createTelegramInitData(
+          undefined,
+          randomTelegramUserId(),
+        ),
+      },
+    });
+    const { token: otherToken } = (await otherSession.json()) as {
+      token: string;
+    };
+    const stolen = await request.post("/api/telegram/adopt", {
+      headers: { Authorization: `Bearer ${otherToken}` },
+      data: { items: [{ id, manageToken }] },
+    });
+    expect(await stolen.json()).toEqual({ linked: 0, skipped: 1 });
+  });
+
+  test("lists and revokes an owned share from a fresh session", async ({
+    browser,
+    page,
+  }) => {
+    const userId = randomTelegramUserId();
+    const initData = createTelegramInitData(undefined, userId);
+    await installTelegramMock(page, initData);
+    const link = await createTextShare(page, "Cross device note", {
+      views: "3",
+    });
+    const id = new URL(link).pathname.split("/").pop()!;
+
+    const fresh = await browser.newContext();
+    const freshPage = await fresh.newPage();
+    await installTelegramMock(freshPage, initData);
+    await freshPage.goto("/manage");
+    await expect(
+      freshPage.getByRole("heading", { name: "Telegram account" }),
+    ).toBeVisible();
+    const article = freshPage.locator("article").filter({ hasText: id });
+    await expect(article).toBeVisible();
+
+    await article
+      .getByRole("button", { name: "Revoke", exact: true })
+      .click();
+    await freshPage
+      .getByRole("button", { name: "Revoke share", exact: true })
+      .click();
+    await expect(
+      article.getByText("Revoked", { exact: true }),
+    ).toBeVisible();
+    await fresh.close();
+  });
+
+  test("links local shares to Telegram from the manage page", async ({
+    browser,
+    page,
+  }) => {
+    const userId = randomTelegramUserId();
+    const initData = createTelegramInitData(undefined, userId);
+    const link = await createTextShare(page, "Adopt note", { views: "3" });
+    const id = new URL(link).pathname.split("/").pop()!;
+
+    await installTelegramMock(page, initData);
+    await page.goto("/manage");
+    await expect(
+      page.getByRole("heading", { name: "Telegram account" }),
+    ).toBeVisible();
+    await page
+      .getByRole("button", { name: "Link this browser's shares", exact: true })
+      .click();
+    await expect(page.getByText(/shares linked to Telegram/)).toBeVisible();
+
+    const fresh = await browser.newContext();
+    const freshPage = await fresh.newPage();
+    await installTelegramMock(freshPage, initData);
+    await freshPage.goto("/manage");
+    await expect(
+      freshPage.locator("article").filter({ hasText: id }),
+    ).toBeVisible();
+    await fresh.close();
   });
 });

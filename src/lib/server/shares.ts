@@ -1,6 +1,6 @@
 import { getDb, getShareRow, type ShareRow } from "./db";
 import { AppError } from "./http";
-import { verifyTokenHash } from "./tokens";
+import { verifyTokenHash, safeEqual } from "./tokens";
 import { deleteShareBlobs } from "./storage";
 import {
   BURN_GRACE_MS,
@@ -216,10 +216,19 @@ export async function maybePurge(id: string): Promise<boolean> {
 
 export async function revokeShare(
   id: string,
-  manageToken: string,
+  manageToken: string | null,
+  ownerHash?: Uint8Array | null,
 ): Promise<ShareRow> {
   const row = await requireShare(id);
-  if (!verifyTokenHash(manageToken, row.manage_token_hash)) {
+  const tokenAuthorized = manageToken
+    ? verifyTokenHash(manageToken, row.manage_token_hash)
+    : false;
+  const ownerAuthorized = Boolean(
+    ownerHash &&
+      row.telegram_user_hash &&
+      safeEqual(ownerHash, row.telegram_user_hash),
+  );
+  if (!tokenAuthorized && !ownerAuthorized) {
     throw new AppError("UNAUTHORIZED", 403);
   }
   if (row.status === "revoked") return row;
@@ -231,14 +240,7 @@ export async function revokeShare(
   return requireShare(id);
 }
 
-export async function lookupManaged(
-  id: string,
-  manageToken: string,
-  now = Date.now(),
-): Promise<LookupResult | null> {
-  const row = await getShareRow(id);
-  if (!row) return null;
-  if (!verifyTokenHash(manageToken, row.manage_token_hash)) return null;
+function toLookupResult(row: ShareRow, now: number): LookupResult {
   return {
     id: row.id,
     kind: row.kind,
@@ -250,6 +252,60 @@ export async function lookupManaged(
     views: row.views,
     hasPassword: Boolean(row.password_verifier),
   };
+}
+
+export async function lookupManaged(
+  id: string,
+  manageToken: string,
+  now = Date.now(),
+): Promise<LookupResult | null> {
+  const row = await getShareRow(id);
+  if (!row) return null;
+  if (!verifyTokenHash(manageToken, row.manage_token_hash)) return null;
+  return toLookupResult(row, now);
+}
+
+export async function listOwnedShares(
+  ownerHash: Uint8Array,
+  now = Date.now(),
+): Promise<LookupResult[]> {
+  const db = await getDb();
+  const rows = await db.all<ShareRow>(
+    `SELECT * FROM shares
+     WHERE telegram_user_hash = ?
+     ORDER BY created_at DESC
+     LIMIT 200`,
+    [ownerHash],
+  );
+  return rows.map((row) => toLookupResult(row, now));
+}
+
+export async function adoptShare(
+  id: string,
+  manageToken: string,
+  ownerHash: Uint8Array,
+): Promise<"linked" | "skipped"> {
+  const row = await getShareRow(id);
+  if (!row) return "skipped";
+  if (!verifyTokenHash(manageToken, row.manage_token_hash)) return "skipped";
+  if (row.telegram_user_hash) {
+    return safeEqual(ownerHash, row.telegram_user_hash) ? "linked" : "skipped";
+  }
+
+  const db = await getDb();
+  const result = await db.run(
+    `UPDATE shares
+     SET telegram_user_hash = ?
+     WHERE id = ? AND telegram_user_hash IS NULL`,
+    [ownerHash, id],
+  );
+  if (result.changes === 1) return "linked";
+
+  const updated = await getShareRow(id);
+  return updated?.telegram_user_hash &&
+    safeEqual(ownerHash, updated.telegram_user_hash)
+    ? "linked"
+    : "skipped";
 }
 
 export async function storageUsedBytes(): Promise<number> {

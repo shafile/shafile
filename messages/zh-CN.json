@@ -1,6 +1,7 @@
 {
   "Common": {
     "appName": "Shafile",
+    "share": "分享",
     "tagline": "端到端加密分享",
     "navCreate": "创建",
     "navManage": "我的分享",
@@ -237,7 +238,13 @@
     "passwordProtected": "密码保护",
     "remaining": "剩余",
     "open": "打开",
-    "keyWarning": "从这里复制的链接包含解密密钥。"
+    "keyWarning": "从这里复制的链接包含解密密钥。",
+    "telegramTitle": "Telegram 账号",
+    "telegramDesc": "使用 Telegram 登录时创建的分享。链接密钥仍只保存在创建它的设备上。",
+    "telegramAdopt": "关联此浏览器中的分享",
+    "telegramAdoptHint": "将此浏览器中保存的分享关联到 Telegram 账号，以便在其他设备上管理。链接密钥仍只保存在此设备。",
+    "telegramAdoptSuccess": "已将 {count} 个分享关联到 Telegram。",
+    "telegramAdoptPartial": "已关联 {linked} 个，跳过 {skipped} 个。"
   },
   "Status": {
     "ready": "可访问",
@@ -276,7 +283,9 @@
     "EMPTY_TEXT": "内容为空。",
     "FILE_REQUIRED": "请先选择文件。",
     "INTERNAL_ERROR": "服务器出错了。",
-    "FILE_MISSING": "服务器上的加密文件不存在。"
+    "FILE_MISSING": "服务器上的加密文件不存在。",
+    "TELEGRAM_AUTH_FAILED": "Telegram 无法验证此会话，请重新打开 Mini App 再试。",
+    "TELEGRAM_NOT_CONFIGURED": "此服务器尚未配置 Telegram 登录。"
   },
   "Meta": {
     "title": "Shafile — 端到端加密的文件与文字分享",

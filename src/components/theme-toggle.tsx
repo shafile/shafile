@@ -29,7 +29,7 @@ export function ThemeToggle() {
   return (
     <button
       type="button"
-      className="icon-button"
+      className="icon-button theme-toggle"
       onClick={toggle}
       aria-label={t("theme")}
       title={t("theme")}
