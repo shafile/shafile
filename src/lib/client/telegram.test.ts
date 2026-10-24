@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   buildTelegramTheme,
   isWebUrl,
-  mapTelegramLanguage,
   telegramShareUrl,
 } from "./telegram";
 
@@ -75,15 +74,5 @@ describe("telegram external links", () => {
     expect(isWebUrl("javascript:alert(1)")).toBe(false);
     expect(isWebUrl("tg://resolve?domain=shafile")).toBe(false);
     expect(isWebUrl("not a url")).toBe(false);
-  });
-});
-
-describe("telegram language mapping", () => {
-  it("maps regional telegram locales onto supported app locales", () => {
-    expect(mapTelegramLanguage("en-US")).toBe("en");
-    expect(mapTelegramLanguage("zh-hans")).toBe("zh-CN");
-    expect(mapTelegramLanguage("es-419")).toBe("es-MX");
-    expect(mapTelegramLanguage("pt-BR")).toBeNull();
-    expect(mapTelegramLanguage(undefined)).toBeNull();
   });
 });

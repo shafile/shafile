@@ -1,4 +1,3 @@
-import type { Locale } from "@/i18n/locales";
 import { exchangeTelegramSession } from "./api";
 
 export type TelegramThemeParams = {
@@ -286,41 +285,6 @@ export function haptic(type: "success" | "error" | "warning" | "light"): void {
   } else {
     feedback.impactOccurred?.(type);
   }
-}
-
-export function mapTelegramLanguage(code: string | undefined): Locale | null {
-  if (!code) return null;
-  const base = code.trim().toLowerCase().split(/[-_]/)[0];
-  switch (base) {
-    case "en":
-      return "en";
-    case "zh":
-      return "zh-CN";
-    case "ja":
-      return "ja";
-    case "ko":
-      return "ko";
-    case "ru":
-      return "ru";
-    case "ar":
-      return "ar";
-    case "fr":
-      return "fr";
-    case "de":
-      return "de";
-    case "hi":
-      return "hi";
-    case "es":
-      return "es-MX";
-    default:
-      return null;
-  }
-}
-
-export function telegramLocale(): Locale | null {
-  return mapTelegramLanguage(
-    getTelegramWebApp()?.initDataUnsafe?.user?.language_code,
-  );
 }
 
 let sessionCache: { token: string; expiresAt: number } | null = null;

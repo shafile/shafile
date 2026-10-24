@@ -426,7 +426,18 @@ test.describe("telegram mini app", () => {
     expect(values.chrome).toBe("#101418");
   });
 
-  test("adopts the telegram language on first launch", async ({ page }) => {
+  test("shows the functional mini app home instead of the marketing page", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await expect(page.locator("html")).toHaveAttribute("data-tg", "1");
+    await expect(page.locator(".tg-home")).toBeVisible();
+    await expect(page.locator(".web-home")).toBeHidden();
+  });
+
+  test("keeps the browser language when telegram language differs", async ({
+    page,
+  }) => {
     await page.addInitScript(() => {
       (
         window as unknown as {
@@ -435,13 +446,12 @@ test.describe("telegram mini app", () => {
           };
         }
       ).Telegram.WebApp.initDataUnsafe = {
-        user: { language_code: "ru" },
+        user: { language_code: "zh-CN" },
       };
     });
 
     await page.goto("/");
-    await expect(page.locator("html")).toHaveAttribute("lang", "ru");
-    await expect(page.locator("html")).toHaveAttribute("dir", "ltr");
+    await expect(page.locator("html")).toHaveAttribute("lang", "en");
   });
 
   test("keeps the share key readable with telegram hash parameters", async ({
@@ -520,8 +530,7 @@ test.describe("mobile share flow", () => {
   });
 });
 
-test.describe("telegram identity", () => {
-  test("exchanges valid initData for a session and rejects tampering", async ({
+test.describe("telegram identity", () => {  test("exchanges valid initData for a session and rejects tampering", async ({
     request,
   }) => {
     const userId = randomTelegramUserId();
@@ -754,5 +763,30 @@ test.describe("telegram identity", () => {
       freshPage.locator("article").filter({ hasText: id }),
     ).toBeVisible();
     await fresh.close();
+  });
+});
+
+test.describe("telegram webhook", () => {
+  test("requires the webhook secret", async ({ request }) => {
+    const missing = await request.post("/api/telegram/webhook", {
+      data: { update_id: 1 },
+    });
+    expect(missing.status()).toBe(401);
+
+    const wrong = await request.post("/api/telegram/webhook", {
+      headers: {
+        "x-telegram-bot-api-secret-token": "wrong-secret",
+      },
+      data: { update_id: 1 },
+    });
+    expect(wrong.status()).toBe(401);
+
+    const ok = await request.post("/api/telegram/webhook", {
+      headers: {
+        "x-telegram-bot-api-secret-token": "e2e-telegram-webhook-secret",
+      },
+      data: { update_id: 1 },
+    });
+    expect(ok.status()).toBe(200);
   });
 });

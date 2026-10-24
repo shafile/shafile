@@ -106,6 +106,7 @@ Two supported paths:
 | `TELEGRAM_BOT_TOKEN` | — | Enables Telegram `initData` session exchange |
 | `TELEGRAM_SESSION_SECRET` | derived from `TICKET_SECRET` | Telegram session token HMAC secret |
 | `TELEGRAM_HASH_SECRET` | derived from `TICKET_SECRET` | Telegram user-id hash secret |
+| `TELEGRAM_WEBHOOK_SECRET` | — | Telegram bot webhook verification secret |
 | `MAX_SHARE_BYTES` | 5 GiB | Per-file limit |
 | `MAX_STORAGE_BYTES` | 50 GiB | Total storage limit |
 | `TRUST_PROXY` | `false` | Set to `true` behind a reverse proxy |
