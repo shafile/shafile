@@ -25,6 +25,8 @@ export const errorCodes = [
   "PASSWORD_TOO_SHORT",
   "EMPTY_TEXT",
   "FILE_REQUIRED",
+  "TELEGRAM_AUTH_FAILED",
+  "TELEGRAM_NOT_CONFIGURED",
   "INTERNAL_ERROR",
   "FILE_MISSING",
 ] as const;

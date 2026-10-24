@@ -1,6 +1,7 @@
 {
   "Common": {
     "appName": "Shafile",
+    "share": "Teilen",
     "tagline": "Ende-zu-Ende-verschlüsseltes Teilen",
     "navCreate": "Erstellen",
     "navManage": "Meine Freigaben",
@@ -237,7 +238,13 @@
     "passwordProtected": "Passwortgeschützt",
     "remaining": "Übrig",
     "open": "Öffnen",
-    "keyWarning": "Von hier kopierte Links enthalten den Entschlüsselungsschlüssel."
+    "keyWarning": "Von hier kopierte Links enthalten den Entschlüsselungsschlüssel.",
+    "telegramTitle": "Telegram-Konto",
+    "telegramDesc": "Freigaben, die während der Telegram-Anmeldung erstellt wurden. Link-Schlüssel bleiben auf dem Gerät, auf dem sie erstellt wurden.",
+    "telegramAdopt": "Freigaben dieses Browsers verknüpfen",
+    "telegramAdoptHint": "Verknüpfe die in diesem Browser gespeicherten Freigaben mit deinem Telegram-Konto, um sie auf anderen Geräten zu verwalten. Link-Schlüssel bleiben auf diesem Gerät.",
+    "telegramAdoptSuccess": "{count} Freigaben mit Telegram verknüpft.",
+    "telegramAdoptPartial": "{linked} verknüpft, {skipped} übersprungen."
   },
   "Status": {
     "ready": "Bereit",
@@ -276,7 +283,9 @@
     "EMPTY_TEXT": "Die Notiz ist leer.",
     "FILE_REQUIRED": "Wähle zuerst eine Datei aus.",
     "INTERNAL_ERROR": "Auf dem Server ist ein Fehler aufgetreten.",
-    "FILE_MISSING": "Die verschlüsselte Datei fehlt auf dem Server."
+    "FILE_MISSING": "Die verschlüsselte Datei fehlt auf dem Server.",
+    "TELEGRAM_AUTH_FAILED": "Telegram konnte diese Sitzung nicht bestätigen. Öffne die Mini App erneut.",
+    "TELEGRAM_NOT_CONFIGURED": "Die Telegram-Anmeldung ist auf diesem Server nicht konfiguriert."
   },
   "Meta": {
     "title": "Shafile — Ende-zu-Ende-verschlüsseltes Teilen von Dateien und Texten",

@@ -1,6 +1,7 @@
 {
   "Common": {
     "appName": "Shafile",
+    "share": "共有",
     "tagline": "エンドツーエンド暗号化の共有",
     "navCreate": "作成",
     "navManage": "自分の共有",
@@ -237,7 +238,13 @@
     "passwordProtected": "パスワード保護",
     "remaining": "残り",
     "open": "開く",
-    "keyWarning": "ここからコピーしたリンクには復号鍵が含まれます。"
+    "keyWarning": "ここからコピーしたリンクには復号鍵が含まれます。",
+    "telegramTitle": "Telegram アカウント",
+    "telegramDesc": "Telegram でサインイン中に作成した共有です。リンクキーは作成した端末にのみ残ります。",
+    "telegramAdopt": "このブラウザの共有をリンク",
+    "telegramAdoptHint": "このブラウザに保存された共有を Telegram アカウントに紐づけると、他の端末から管理できます。リンクキーはこの端末に残ります。",
+    "telegramAdoptSuccess": "{count} 件の共有を Telegram にリンクしました。",
+    "telegramAdoptPartial": "{linked} 件をリンクし、{skipped} 件をスキップしました。"
   },
   "Status": {
     "ready": "利用可能",
@@ -276,7 +283,9 @@
     "EMPTY_TEXT": "内容が空です。",
     "FILE_REQUIRED": "先にファイルを選択してください。",
     "INTERNAL_ERROR": "サーバーでエラーが発生しました。",
-    "FILE_MISSING": "サーバー上に暗号化ファイルがありません。"
+    "FILE_MISSING": "サーバー上に暗号化ファイルがありません。",
+    "TELEGRAM_AUTH_FAILED": "Telegram でこのセッションを確認できませんでした。Mini App を開き直してください。",
+    "TELEGRAM_NOT_CONFIGURED": "このサーバーでは Telegram ログインが設定されていません。"
   },
   "Meta": {
     "title": "Shafile — エンドツーエンド暗号化のファイル・テキスト共有",

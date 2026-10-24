@@ -3,9 +3,11 @@ import createNextIntlPlugin from "next-intl/plugin";
 
 const isDev = process.env.NODE_ENV !== "production";
 
+const telegramOrigins = ["https://telegram.org", "https://*.telegram.org"];
+
 const contentSecurityPolicy = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'${isDev ? " 'unsafe-eval'" : ""}`,
+  `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' ${telegramOrigins.join(" ")}${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
   "font-src 'self' data:",
@@ -14,7 +16,7 @@ const contentSecurityPolicy = [
   "object-src 'none'",
   "base-uri 'none'",
   "form-action 'self'",
-  "frame-ancestors 'none'",
+  `frame-ancestors 'self' ${telegramOrigins.join(" ")}`,
   "manifest-src 'self'",
 ].join("; ");
 
@@ -33,7 +35,6 @@ const nextConfig: NextConfig = {
           { key: "Content-Security-Policy", value: contentSecurityPolicy },
           { key: "Referrer-Policy", value: "no-referrer" },
           { key: "X-Content-Type-Options", value: "nosniff" },
-          { key: "X-Frame-Options", value: "DENY" },
           {
             key: "Permissions-Policy",
             value: "camera=(), microphone=(), geolocation=(), payment=()",

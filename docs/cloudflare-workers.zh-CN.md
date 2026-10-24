@@ -65,7 +65,12 @@ Worker 首次访问数据库时也会执行 `CREATE TABLE IF NOT EXISTS`，生�
 pnpm exec wrangler secret put TICKET_SECRET
 pnpm exec wrangler secret put IP_HASH_SECRET
 pnpm exec wrangler secret put CRON_SECRET
+pnpm exec wrangler secret put TELEGRAM_BOT_TOKEN
+pnpm exec wrangler secret put TELEGRAM_SESSION_SECRET
+pnpm exec wrangler secret put TELEGRAM_HASH_SECRET
 ```
+
+三个 Telegram 密钥均为可选，仅在启用 Telegram 身份时需要。未设置 TELEGRAM_SESSION_SECRET 或 TELEGRAM_HASH_SECRET 时，Worker 会从 TICKET_SECRET 派生。未设置 TELEGRAM_BOT_TOKEN 时会话接口保持禁用。
 
 每个密钥都使用密码学安全的随机值，例如：
 

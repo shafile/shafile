@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useEffect,
   useRef,
   useState,
   type DragEvent,
@@ -48,6 +49,12 @@ import {
 import { encryptAndUploadFile } from "@/lib/client/upload";
 import { createShare } from "@/lib/client/api";
 import {
+  clearTelegramSession,
+  getTelegramSessionToken,
+  haptic,
+  setClosingConfirmation,
+} from "@/lib/client/telegram";
+import {
   addManagement,
   buildManagementUrl,
 } from "@/lib/client/storage";
@@ -58,6 +65,7 @@ import { CopyButton } from "@/components/ui/copy-button";
 import { ErrorNotice } from "@/components/ui/error-notice";
 import { Progress } from "@/components/ui/progress";
 import { QrCode } from "@/components/ui/qr-code";
+import { ShareButton } from "@/components/ui/share-button";
 
 type AccessMode = "link" | "password";
 type Mode = "text" | "file";
@@ -144,6 +152,11 @@ export function CreateForm({ maxFileBytes }: { maxFileBytes: number }) {
   const [result, setResult] = useState<ResultState | null>(null);
 
   const maxFileSize = formatBytes(maxFileBytes, locale);
+
+  useEffect(() => {
+    setClosingConfirmation(working);
+    return () => setClosingConfirmation(false);
+  }, [working]);
 
   function resetAll() {
     setMode("text");
@@ -261,6 +274,7 @@ export function CreateForm({ maxFileBytes }: { maxFileBytes: number }) {
       hasPassword,
     };
     addManagement(entry);
+    haptic("success");
     return {
       id,
       link,
@@ -344,17 +358,21 @@ export function CreateForm({ maxFileBytes }: { maxFileBytes: number }) {
     const contentKey = generateContentKey();
 
     try {
+      const sessionPromise = getTelegramSessionToken();
       const passwordEnvelope = await makePassword(contentKey, id);
 
       if (mode === "text") {
         const ciphertext = await encryptText(contentKey, text, id);
-        const response = await createShare({
-          kind: "text",
-          id,
-          ...schedule,
-          password: passwordEnvelope,
-          payload: bytesToBase64Url(ciphertext),
-        });
+        const response = await createShare(
+          {
+            kind: "text",
+            id,
+            ...schedule,
+            password: passwordEnvelope,
+            payload: bytesToBase64Url(ciphertext),
+          },
+          await sessionPromise,
+        );
         setResult(
           buildResult(
             id,
@@ -379,16 +397,19 @@ export function CreateForm({ maxFileBytes }: { maxFileBytes: number }) {
       const headerHash = await hashFileHeader(header);
       const contentKeyHandle = await importContentKey(contentKey);
 
-      const response = await createShare({
-        kind: "file",
-        id,
-        ...schedule,
-        password: passwordEnvelope,
-        chunkSize: CHUNK_SIZE,
-        chunkCount,
-        noncePrefix: bytesToBase64Url(noncePrefix),
-        fileId: bytesToBase64Url(fileId),
-      });
+      const response = await createShare(
+        {
+          kind: "file",
+          id,
+          ...schedule,
+          password: passwordEnvelope,
+          chunkSize: CHUNK_SIZE,
+          chunkCount,
+          noncePrefix: bytesToBase64Url(noncePrefix),
+          fileId: bytesToBase64Url(fileId),
+        },
+        await sessionPromise,
+      );
       if (!response.uploadToken) throw new ApiClientError("UPLOAD_FAILED");
 
       const draft: PendingUpload = {
@@ -408,6 +429,13 @@ export function CreateForm({ maxFileBytes }: { maxFileBytes: number }) {
       setPending(draft);
       await uploadPendingFile(draft);
     } catch (caught) {
+      if (
+        caught instanceof ApiClientError &&
+        (caught.code === "UNAUTHORIZED" ||
+          caught.code === "TELEGRAM_AUTH_FAILED")
+      ) {
+        clearTelegramSession();
+      }
       setError(caught);
       setStage("idle");
     } finally {
@@ -498,6 +526,9 @@ export function CreateForm({ maxFileBytes }: { maxFileBytes: number }) {
                   label={t("copyInvite")}
                   displayLabel={t("copyInvite")}
                 />
+                {!result.hasPassword && (
+                  <ShareButton url={result.link} title={t("resultTitle")} />
+                )}
                 <Link href={result.link} target="_blank" className="btn btn-secondary btn-sm">
                   {t("openShare")}
                   <ArrowRight size={15} className="directional-icon" />
@@ -708,6 +739,9 @@ export function CreateForm({ maxFileBytes }: { maxFileBytes: number }) {
                       className="field pe-11"
                       value={password}
                       autoComplete="new-password"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
                       onChange={(event) => setPassword(event.target.value)}
                       placeholder={t("passwordPlaceholder")}
                     />
@@ -819,6 +853,8 @@ export function CreateForm({ maxFileBytes }: { maxFileBytes: number }) {
                       type="number"
                       min={1}
                       max={MAX_VIEWS}
+                      inputMode="numeric"
+                      enterKeyHint="done"
                       className="field mt-2"
                       value={customViews}
                       onChange={(event) => setCustomViews(event.target.value)}

@@ -54,6 +54,22 @@ function readyDatabase(): Promise<D1DatabaseLike> {
         const sql = statement.trim();
         if (sql) await db.prepare(sql).run();
       }
+
+      try {
+        await db
+          .prepare("ALTER TABLE shares ADD COLUMN telegram_user_hash BLOB")
+          .run();
+      } catch (error) {
+        if (!String(error).toLowerCase().includes("duplicate column name")) {
+          throw error;
+        }
+      }
+      await db
+        .prepare(
+          "CREATE INDEX IF NOT EXISTS idx_shares_telegram_user ON shares(telegram_user_hash, created_at)",
+        )
+        .run();
+
       return db;
     })();
   }

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Check, Copy } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/cn";
+import { haptic } from "@/lib/client/telegram";
 
 export function CopyButton({
   value,
@@ -36,6 +37,7 @@ export function CopyButton({
       textarea.remove();
     }
     setCopied(true);
+    haptic("light");
     window.setTimeout(() => setCopied(false), 1800);
   }
 
