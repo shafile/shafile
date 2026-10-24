@@ -1,14 +1,19 @@
 import { getShareRow } from "@/lib/server/db";
 import { readJsonLimited } from "@/lib/server/http";
 import { toShareMeta } from "@/lib/server/shares";
+import { buildTelegramAppLink } from "@/lib/server/telegram-app";
 import { getTelegramBotToken } from "@/lib/server/telegram";
 import {
   botLocale,
   formatShareInfo,
+  linkShareIdPromptText,
+  linkSharePromptText,
   miniAppButtonLabel,
   notFoundText,
+  openMiniAppButtonLabel,
   parseCommand,
   parseShareId,
+  sharePromptText,
   startText,
   usageText,
   type BotLocale,
@@ -25,11 +30,16 @@ type TelegramUpdate = {
   };
 };
 
+type InlineButton = {
+  text: string;
+  url?: string;
+  web_app?: { url: string };
+};
+
 async function sendMessage(
   chatId: number | string,
   text: string,
-  locale: BotLocale,
-  webAppUrl?: string,
+  button?: InlineButton,
 ): Promise<void> {
   const token = getTelegramBotToken();
   if (!token) return;
@@ -39,17 +49,8 @@ async function sendMessage(
     text,
     link_preview_options: { is_disabled: true },
   };
-  if (webAppUrl) {
-    payload.reply_markup = {
-      inline_keyboard: [
-        [
-          {
-            text: miniAppButtonLabel(locale),
-            web_app: { url: webAppUrl },
-          },
-        ],
-      ],
-    };
+  if (button) {
+    payload.reply_markup = { inline_keyboard: [[button]] };
   }
 
   await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
@@ -57,6 +58,17 @@ async function sendMessage(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
+}
+
+function startButton(
+  locale: BotLocale,
+  origin: string,
+): InlineButton | undefined {
+  if (!origin.startsWith("https://")) return undefined;
+  return {
+    text: miniAppButtonLabel(locale),
+    web_app: { url: `${origin}/` },
+  };
 }
 
 export async function POST(request: Request) {
@@ -88,34 +100,48 @@ export async function POST(request: Request) {
   const locale = botLocale(message.from?.language_code);
   const origin = new URL(request.url).origin;
   const command = parseCommand(text);
+  const isInfo = command?.name === "info";
   let reply: string;
-  let showMiniApp = false;
+  let button: InlineButton | undefined;
 
   if (command?.name === "start") {
     reply = startText(locale);
-    showMiniApp = true;
-  } else if (command && command.name !== "info") {
+    button = startButton(locale, origin);
+  } else if (command && !isInfo) {
     reply = usageText(locale);
   } else {
-    const candidate = command?.name === "info" ? command.args : text;
+    const candidate = isInfo ? command.args : text;
     const { id, hadKey } = parseShareId(candidate);
     if (!id) {
       reply = usageText(locale);
     } else {
       const row = await getShareRow(id);
-      reply = row
-        ? formatShareInfo(toShareMeta(row), locale, hadKey)
-        : notFoundText(locale);
+      if (!row) {
+        reply = notFoundText(locale);
+      } else {
+        const meta = toShareMeta(row);
+        if (isInfo) {
+          reply = formatShareInfo(meta, locale, hadKey);
+        } else if (meta.hasPassword) {
+          const deepLink = buildTelegramAppLink(id);
+          reply = sharePromptText(meta, locale, Boolean(deepLink));
+          if (deepLink) {
+            button = {
+              text: openMiniAppButtonLabel(locale),
+              url: deepLink,
+            };
+          }
+        } else {
+          reply = /\/s\//.test(text)
+            ? linkSharePromptText(locale)
+            : linkShareIdPromptText(locale);
+        }
+      }
     }
   }
 
   try {
-    await sendMessage(
-      chatId,
-      reply,
-      locale,
-      showMiniApp && origin.startsWith("https://") ? `${origin}/` : undefined,
-    );
+    await sendMessage(chatId, reply, button);
   } catch {
     return new Response("Telegram API error", { status: 502 });
   }
