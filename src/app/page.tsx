@@ -10,6 +10,7 @@ import {
   Timer,
 } from "lucide-react";
 import { getTranslations } from "next-intl/server";
+import { ShareAppButton } from "@/components/ui/share-app-button";
 
 export default async function HomePage() {
   const t = await getTranslations("Home");
@@ -94,6 +95,9 @@ export default async function HomePage() {
                 {common("footerNote")}
               </p>
             </Link>
+          </div>
+          <div className="mt-4">
+            <ShareAppButton />
           </div>
           <p className="notice notice-info mt-4">
             <ShieldCheck size={17} className="shrink-0" />

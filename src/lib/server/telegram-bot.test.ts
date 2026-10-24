@@ -33,6 +33,11 @@ describe("telegram bot parsing", () => {
         "https://shafile.test/s/AAAAAAAAAAAAAAAAAAAAAA#k=secret",
       ),
     ).toEqual({ id: "AAAAAAAAAAAAAAAAAAAAAA", hadKey: true });
+    expect(
+      parseShareId(
+        "https://t.me/shafiledev_bot/shafile?startapp=AAAAAAAAAAAAAAAAAAAAAA",
+      ),
+    ).toEqual({ id: "AAAAAAAAAAAAAAAAAAAAAA", hadKey: false });
     expect(parseShareId("id: AAAAAAAAAAAAAAAAAAAAAA.")).toEqual({
       id: "AAAAAAAAAAAAAAAAAAAAAA",
       hadKey: false,

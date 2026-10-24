@@ -9,6 +9,7 @@ import type {
   LookupResult,
   ShareMeta,
   TelegramAdoptResponse,
+  TelegramAppLinkResponse,
   TelegramSessionResponse,
   TelegramSharesResponse,
   UploadStatusResponse,
@@ -92,6 +93,10 @@ export async function listTelegramShares(
   return requestJson<TelegramSharesResponse>("/api/telegram/shares", {
     headers: authHeaders(sessionToken),
   });
+}
+
+export async function getTelegramAppLink(): Promise<TelegramAppLinkResponse> {
+  return requestJson<TelegramAppLinkResponse>("/api/telegram/app");
 }
 
 export async function adoptTelegramShares(

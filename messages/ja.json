@@ -51,7 +51,8 @@
     "trust4": "失ったパスワードやリンクは復元できません",
     "ctaTitle": "いつでも始められます",
     "ctaDesc": "数秒で共有を作成。インストールは不要です。",
-    "ctaButton": "共有を作成"
+    "ctaButton": "共有を作成",
+    "shareApp": "Shafile を共有"
   },
   "Create": {
     "title": "非公開の共有を作成",
@@ -200,7 +201,8 @@
     "passwordProtected": "パスワード",
     "scheduled": "予約",
     "viewsLabel": "閲覧回数",
-    "viewAgainHint": "閲覧回数が残っています。もう一度開くとさらに1回消費します。"
+    "viewAgainHint": "閲覧回数が残っています。もう一度開くとさらに1回消費します。",
+    "keyMissingTelegramDesc": "この Mini App リンクには復号キーが含まれていません。作成者が送った元の共有リンクを使用してください。"
   },
   "Manage": {
     "title": "自分の共有",

@@ -1,4 +1,4 @@
-import { exchangeTelegramSession } from "./api";
+import { exchangeTelegramSession, getTelegramAppLink } from "./api";
 
 export type TelegramThemeParams = {
   bg_color?: string;
@@ -141,6 +141,11 @@ export function buildTelegramTheme(
 export function isTelegramLaunch(): boolean {
   if (typeof window === "undefined") return false;
   if (window.Telegram?.WebApp?.initData) return true;
+  if (
+    new URLSearchParams(window.location.search).has("tgWebAppStartParam")
+  ) {
+    return true;
+  }
   return TG_HASH_PATTERN.test(window.location.hash.replace(/^#/, ""));
 }
 
@@ -289,6 +294,35 @@ export function haptic(type: "success" | "error" | "warning" | "light"): void {
 
 let sessionCache: { token: string; expiresAt: number } | null = null;
 let sessionPending: Promise<string | null> | null = null;
+let appLinkPromise: Promise<string | null> | null = null;
+
+export function getTelegramAppShareUrl(): Promise<string | null> {
+  if (!appLinkPromise) {
+    appLinkPromise = (async () => {
+      try {
+        const response = await getTelegramAppLink();
+        return response.url;
+      } catch {
+        appLinkPromise = null;
+        return null;
+      }
+    })();
+  }
+  return appLinkPromise;
+}
+
+export function buildMiniAppShareUrl(
+  baseUrl: string,
+  shareId: string,
+): string {
+  try {
+    const url = new URL(baseUrl);
+    url.searchParams.set("startapp", shareId);
+    return url.toString();
+  } catch {
+    return baseUrl;
+  }
+}
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | null> {
   return new Promise((resolve) => {

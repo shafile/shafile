@@ -131,9 +131,16 @@ export function ShareView({ id }: { id: string }) {
   const [tick, setTick] = useState(() => Date.now());
   const [serverOffset, setServerOffset] = useState(0);
   const [clearedKey, setClearedKey] = useState(false);
+  const [viaTelegram, setViaTelegram] = useState(false);
 
   const autoAccessRef = useRef(false);
   const autoRefreshRef = useRef(false);
+
+  useEffect(() => {
+    setViaTelegram(
+      new URLSearchParams(window.location.search).get("via") === "tg",
+    );
+  }, []);
 
   useEffect(() => {
     const key = shareKeyFromHash();
@@ -467,7 +474,9 @@ export function ShareView({ id }: { id: string }) {
             <KeyRound size={24} />
           </span>
           <h1 className="mt-4 text-2xl font-bold tracking-tight">{t("keyMissingTitle")}</h1>
-          <p className="mt-2 text-sm leading-6 text-muted">{t("keyMissingDesc")}</p>
+          <p className="mt-2 text-sm leading-6 text-muted">
+            {viaTelegram ? t("keyMissingTelegramDesc") : t("keyMissingDesc")}
+          </p>
           <Link href="/" className="btn btn-secondary mt-5">
             {common("backHome")}
           </Link>

@@ -435,6 +435,39 @@ test.describe("telegram mini app", () => {
     await expect(page.locator(".web-home")).toBeHidden();
   });
 
+  test("shares the mini app from home", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.locator("html")).toHaveAttribute("data-tg-ready", "1");
+    await page.evaluate(() => {
+      const app = (
+        window as unknown as {
+          Telegram: { WebApp: Record<string, unknown> };
+        }
+      ).Telegram.WebApp;
+      app.openTelegramLink = (url: string) => {
+        (window as unknown as { __tgShare: string }).__tgShare = url;
+      };
+    });
+
+    await page
+      .getByRole("button", { name: "Share Shafile", exact: true })
+      .click();
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const value = (window as unknown as { __tgShare?: string })
+            .__tgShare;
+          if (!value) return null;
+          try {
+            return new URL(value).searchParams.get("url");
+          } catch {
+            return null;
+          }
+        }),
+      )
+      .toBe("https://t.me/e2e_telegram_bot/shafile");
+  });
+
   test("keeps the browser language when telegram language differs", async ({
     page,
   }) => {
@@ -487,6 +520,69 @@ test.describe("telegram mini app", () => {
       .toContain("https://t.me/share/url?url=");
   });
 
+  test("shares a password share as a mini app deep link", async ({ page }) => {
+    const link = await createTextShare(page, "Password mini app", {
+      password: "correct horse battery",
+      views: "3",
+    });
+    const id = new URL(link).pathname.split("/").pop()!;
+    await page.evaluate(() => {
+      const app = (
+        window as unknown as {
+          Telegram: { WebApp: Record<string, unknown> };
+        }
+      ).Telegram.WebApp;
+      app.openTelegramLink = (url: string) => {
+        (window as unknown as { __tgShare: string }).__tgShare = url;
+      };
+    });
+
+    await page.getByRole("button", { name: "Share", exact: true }).click();
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const value = (window as unknown as { __tgShare?: string })
+            .__tgShare;
+          if (!value) return null;
+          try {
+            return new URL(value).searchParams.get("url");
+          } catch {
+            return null;
+          }
+        }),
+      )
+      .toBe(`https://t.me/e2e_telegram_bot/shafile?startapp=${id}`);
+  });
+
+  test("opens a password share from a telegram startapp link", async ({
+    page,
+  }) => {
+    const link = await createTextShare(page, "Start param password", {
+      password: "correct horse battery",
+      views: "3",
+    });
+    const id = new URL(link).pathname.split("/").pop()!;
+
+    await page.goto(`/?tgWebAppStartParam=${id}`);
+    await expect(page).toHaveURL(new RegExp(`/s/${id}`));
+    await expect(page.locator("#unlock-password")).toBeVisible();
+  });
+
+  test("shows the telegram key-missing message for a link share startapp", async ({
+    page,
+  }) => {
+    const link = await createTextShare(page, "Start param link", {
+      views: "3",
+    });
+    const id = new URL(link).pathname.split("/").pop()!;
+
+    await page.goto(`/?tgWebAppStartParam=${id}`);
+    await expect(page).toHaveURL(new RegExp(`/s/${id}`));
+    await expect(
+      page.getByText(/does not include the decryption key/),
+    ).toBeVisible();
+  });
+
   test("opens external markdown links inside telegram", async ({ page }) => {
     const link = await createTextShare(
       page,
@@ -530,7 +626,15 @@ test.describe("mobile share flow", () => {
   });
 });
 
-test.describe("telegram identity", () => {  test("exchanges valid initData for a session and rejects tampering", async ({
+test.describe("telegram identity", () => {
+  test("returns the configured mini app link", async ({ request }) => {
+    const response = await request.get("/api/telegram/app");
+    expect(response.status()).toBe(200);
+    const body = (await response.json()) as { url?: string | null };
+    expect(body.url).toBe("https://t.me/e2e_telegram_bot/shafile");
+  });
+
+  test("exchanges valid initData for a session and rejects tampering", async ({
     request,
   }) => {
     const userId = randomTelegramUserId();

@@ -34,6 +34,11 @@ export function parseShareId(text: string): {
   hadKey: boolean;
 } {
   const hadKey = /#k=/.test(text);
+  const startParamMatch = /[?&]startapp=([A-Za-z0-9_-]{22})(?![A-Za-z0-9_-])/.exec(text);
+  if (startParamMatch && SHARE_ID_PATTERN.test(startParamMatch[1]!)) {
+    return { id: startParamMatch[1]!, hadKey };
+  }
+
   const urlMatch = /\/s\/([A-Za-z0-9_-]{22})(?![A-Za-z0-9_-])/.exec(text);
   if (urlMatch && SHARE_ID_PATTERN.test(urlMatch[1]!)) {
     return { id: urlMatch[1]!, hadKey };

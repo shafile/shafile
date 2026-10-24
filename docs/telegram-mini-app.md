@@ -53,6 +53,27 @@ curl -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setMyCommands" \
 
 The webhook secret is checked against the `X-Telegram-Bot-Api-Secret-Token` header. The bot does not store messages or share keys.
 
+## App and share links
+
+Public configuration:
+
+- `TELEGRAM_BOT_USERNAME`: bot username, for example `shafiledev_bot`
+- `TELEGRAM_MINI_APP_SHORT_NAME`: short name configured in BotFather, default `shafile`
+
+`GET /api/telegram/app` returns `https://t.me/<bot>/<short_name>` for the home share button.
+
+Sharing rules:
+
+- Mini App home: `https://t.me/<bot>/<short_name>`
+- Password share: `https://t.me/<bot>/<short_name>?startapp=<shareId>`
+  - The Mini App redirects to `/s/<shareId>` and asks for the password.
+  - Only the public share ID is passed through Telegram.
+- Link share: keep the original `https://host/s/<id>#k=...` link in a browser.
+  - The key must not be placed in `startapp` or a `t.me` link.
+  - Opening a link share through `startapp` shows a specific missing-key message.
+
+`tgWebAppStartParam` and `initDataUnsafe.start_param` are validated against the 22-character share ID pattern before navigation.
+
 ## Manual device matrix
 
 Automated tests simulate the WebApp API. Verify these clients before a release:
