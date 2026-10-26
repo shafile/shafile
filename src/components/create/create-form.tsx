@@ -474,70 +474,25 @@ export function CreateForm({ maxFileBytes }: { maxFileBytes: number }) {
                     {result.password ? t("accessPassword") : t("accessLink")}
                   </span>
                 </div>
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  <code
-                    dir="ltr"
-                    data-testid="share-link"
-                    className="min-w-0 flex-1 break-all rounded-xl border border-line bg-surface-2 px-3 py-2.5 text-xs leading-5"
+                <code
+                  dir="ltr"
+                  data-testid="share-link"
+                  className="block w-full break-all rounded-xl border border-line bg-surface-2 px-3 py-2.5 text-xs leading-5"
+                >
+                  {result.link}
+                </code>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <CopyButton value={result.link} label={t("linkLabel")} />
+                  <Link
+                    href={result.link}
+                    target="_blank"
+                    className="btn btn-secondary btn-sm"
+                    aria-label={t("openShare")}
+                    title={t("openShare")}
                   >
-                    {result.link}
-                  </code>
-                  <div className="flex gap-2">
-                    <CopyButton value={result.link} label={t("linkLabel")} />
-                    <Link
-                      href={result.link}
-                      target="_blank"
-                      className="icon-button"
-                      aria-label={t("openShare")}
-                      title={t("openShare")}
-                    >
-                      <ExternalLink size={16} />
-                    </Link>
-                  </div>
-                </div>
-              </div>
-
-              {result.password && (
-                <div>
-                  <div className="label">
-                    <span>{t("passwordLabelResult")}</span>
-                  </div>
-                  <div className="flex flex-col gap-2 sm:flex-row">
-                    <code
-                      dir="ltr"
-                      data-testid="share-password"
-                      className="min-w-0 flex-1 rounded-xl border border-line bg-surface-2 px-3 py-2.5 text-sm"
-                    >
-                      {result.password}
-                    </code>
-                    <div className="flex flex-wrap gap-2">
-                      <CopyButton
-                        value={result.password}
-                        label={t("passwordLabelResult")}
-                      />
-                      <CopyButton
-                        value={invite}
-                        label={t("copyInvite")}
-                        displayLabel={t("copyInvite")}
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div>
-                <div className="label">
-                  <span>{t("manageLabel")}</span>
-                </div>
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  <code
-                    dir="ltr"
-                    data-testid="manage-link"
-                    className="min-w-0 flex-1 break-all rounded-xl border border-line bg-surface-2 px-3 py-2.5 text-xs leading-5"
-                  >
-                    {result.manageLink}
-                  </code>
-                  <CopyButton value={result.manageLink} label={t("manageLabel")} />
+                    <ExternalLink size={15} />
+                    <span className="sr-only">{t("openShare")}</span>
+                  </Link>
                 </div>
               </div>
 
@@ -549,6 +504,53 @@ export function CreateForm({ maxFileBytes }: { maxFileBytes: number }) {
                   className="btn btn-accent btn-sm"
                 />
               </div>
+
+              {result.password && (
+                <div>
+                  <div className="label">
+                    <span>{t("passwordLabelResult")}</span>
+                  </div>
+                  <code
+                    dir="ltr"
+                    data-testid="share-password"
+                    className="block w-full rounded-xl border border-line bg-surface-2 px-3 py-2.5 text-sm"
+                  >
+                    {result.password}
+                  </code>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <CopyButton
+                      value={result.password}
+                      label={t("passwordLabelResult")}
+                    />
+                    <CopyButton
+                      value={invite}
+                      label={t("copyInvite")}
+                      displayLabel={t("copyInvite")}
+                    />
+                  </div>
+                </div>
+              )}
+
+              <details className="rounded-xl border border-line bg-surface-2/40 p-3">
+                <summary className="cursor-pointer text-xs font-semibold text-muted">
+                  {t("manageLabel")}
+                </summary>
+                <div className="mt-2">
+                  <code
+                    dir="ltr"
+                    data-testid="manage-link"
+                    className="block w-full break-all rounded-xl border border-line bg-surface-2 px-3 py-2.5 text-xs leading-5"
+                  >
+                    {result.manageLink}
+                  </code>
+                  <div className="mt-2">
+                    <CopyButton
+                      value={result.manageLink}
+                      label={t("manageLabel")}
+                    />
+                  </div>
+                </div>
+              </details>
 
               <div className="space-y-2">
                 <p className="notice notice-warn">
