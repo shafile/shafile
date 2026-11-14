@@ -266,6 +266,7 @@
     "INVALID_PASSWORD": "Esa contraseña no funcionó.",
     "RATE_LIMITED": "Demasiados intentos. Espera un momento y vuelve a intentarlo.",
     "ACCESS_TOKEN_INVALID": "Tu ventana de acceso venció. Inténtalo de nuevo.",
+    "retryAfter": "Reintenta en {seconds} s.",
     "UNAUTHORIZED": "No tienes permiso para hacer eso.",
     "KEY_MISSING": "Falta la clave de descifrado en el enlace.",
     "CORRUPT_DATA": "Los datos cifrados no pasaron la comprobación de integridad.",

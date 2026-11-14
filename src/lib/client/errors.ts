@@ -13,3 +13,12 @@ export function errorCodeOf(error: unknown): ErrorCode {
 export function isErrorCodeValue(value: string): value is ErrorCode {
   return isErrorCode(value);
 }
+
+export function retryAfterSecondsOf(error: unknown): number | null {
+  if (!(error instanceof ApiClientError)) return null;
+  const value = error.params?.retryAfterSeconds;
+  if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) {
+    return null;
+  }
+  return Math.max(1, Math.ceil(value));
+}

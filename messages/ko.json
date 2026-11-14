@@ -266,6 +266,7 @@
     "INVALID_PASSWORD": "비밀번호가 맞지 않습니다.",
     "RATE_LIMITED": "시도가 너무 많습니다. 잠시 후 다시 시도하세요.",
     "ACCESS_TOKEN_INVALID": "접근 시간이 만료되었습니다. 다시 시도하세요.",
+    "retryAfter": "{seconds}초 후 다시 시도하세요.",
     "UNAUTHORIZED": "이 작업을 수행할 권한이 없습니다.",
     "KEY_MISSING": "링크에 복호화 키가 없습니다.",
     "CORRUPT_DATA": "암호화된 데이터가 무결성 검사를 통과하지 못했습니다.",

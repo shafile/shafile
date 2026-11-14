@@ -23,7 +23,7 @@ export async function GET(
       30,
       60 * 1000,
     );
-    if (!limit.allowed) throw new AppError("RATE_LIMITED", 429);
+    if (!limit.allowed) throw new AppError("RATE_LIMITED", 429, { retryAfterSeconds: limit.retryAfterSeconds });
 
     requireAccessToken(request, id);
     const row = await requireShare(id);

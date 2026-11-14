@@ -14,6 +14,12 @@ export async function register() {
   const { runCleanup } = await import("./lib/server/shares");
 
   if (isCloudflareRuntime()) return;
+
+  if (process.env.TRUST_PROXY !== "true") {
+    console.warn(
+      "[shafile] TRUST_PROXY is not enabled. Per-client rate limiting will collapse to a single bucket; set TRUST_PROXY=true when running behind a reverse proxy or tunnel.",
+    );
+  }
   ensureDataDirs();
   await getDb();
   void runCleanup();
