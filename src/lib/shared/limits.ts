@@ -24,3 +24,13 @@ export function getMaxStorageBytes(): number {
     ? 9 * 1024 * 1024 * 1024
     : 50 * 1024 * 1024 * 1024;
 }
+
+export function getPasswordKdfMinMemory(): number {
+  const parsed = Number(process.env.PASSWORD_KDF_MIN_MEMORY ?? "");
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 65_536;
+}
+
+export function getPasswordKdfMinIterations(): number {
+  const parsed = Number(process.env.PASSWORD_KDF_MIN_ITERATIONS ?? "");
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 3;
+}

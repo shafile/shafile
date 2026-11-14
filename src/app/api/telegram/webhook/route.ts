@@ -3,6 +3,7 @@ import { readJsonLimited } from "@/lib/server/http";
 import { toShareMeta } from "@/lib/server/shares";
 import { buildTelegramAppLink } from "@/lib/server/telegram-app";
 import { getTelegramBotToken } from "@/lib/server/telegram";
+import { safeEqualStrings } from "@/lib/server/tokens";
 import {
   botLocale,
   formatShareInfo,
@@ -76,7 +77,8 @@ export async function POST(request: Request) {
   if (!secret) {
     return new Response("Telegram webhook is not configured", { status: 503 });
   }
-  if (request.headers.get("x-telegram-bot-api-secret-token") !== secret) {
+  const providedSecret = request.headers.get("x-telegram-bot-api-secret-token");
+  if (!providedSecret || !safeEqualStrings(providedSecret, secret)) {
     return new Response("Unauthorized", { status: 401 });
   }
   if (!getTelegramBotToken()) {

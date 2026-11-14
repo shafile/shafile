@@ -178,6 +178,17 @@ export async function endActiveStream(id: string): Promise<void> {
   }
 }
 
+export async function touchActiveStream(
+  id: string,
+  now = Date.now(),
+): Promise<void> {
+  const db = await getDb();
+  await db.run(
+    "UPDATE active_streams SET updated_at = ? WHERE share_id = ?",
+    [now, id],
+  );
+}
+
 async function hasActiveStream(id: string): Promise<boolean> {
   const db = await getDb();
   const row = await db.get<{ count: number }>(
@@ -326,7 +337,11 @@ export async function runCleanup(now = Date.now()): Promise<void> {
   cleaning = true;
   try {
     const db = await getDb();
-    let budget = 3;
+    const budgetRaw = Number(process.env.CLEANUP_BUDGET ?? "");
+    let budget =
+      Number.isFinite(budgetRaw) && budgetRaw >= 1
+        ? Math.floor(budgetRaw)
+        : 3;
 
     const drafts = await db.all<ShareRow>(
       "SELECT * FROM shares WHERE status = 'draft'",

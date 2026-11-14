@@ -7,6 +7,8 @@ import {
   SHARE_ID_PATTERN,
   getMaxFileBytes,
   getMaxStorageBytes,
+  getPasswordKdfMinIterations,
+  getPasswordKdfMinMemory,
 } from "@/lib/shared/limits";
 import { base64UrlToBytes } from "@/lib/shared/encoding";
 import {
@@ -130,9 +132,9 @@ function validateCommon(input: {
       kdf.alg !== "argon2id" ||
       kdf.version !== 1 ||
       kdf.hashLength !== 32 ||
-      kdf.memorySize < 16_384 ||
+      kdf.memorySize < getPasswordKdfMinMemory() ||
       kdf.memorySize > 262_144 ||
-      kdf.iterations < 1 ||
+      kdf.iterations < getPasswordKdfMinIterations() ||
       kdf.iterations > 10 ||
       kdf.parallelism < 1 ||
       kdf.parallelism > 4

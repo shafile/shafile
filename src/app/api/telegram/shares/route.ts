@@ -19,7 +19,7 @@ export async function GET(request: Request) {
       60,
       60 * 1000,
     );
-    if (!limit.allowed) throw new AppError("RATE_LIMITED", 429);
+    if (!limit.allowed) throw new AppError("RATE_LIMITED", 429, { retryAfterSeconds: limit.retryAfterSeconds });
 
     const session = requireTelegramSession(request);
     const items = await listOwnedShares(session.uid);

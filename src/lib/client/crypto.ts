@@ -21,7 +21,7 @@ export const CONTENT_KEY_BYTES = 32;
 
 export const DEFAULT_KDF = {
   alg: "argon2id",
-  memorySize: 65536,
+  memorySize: 131072,
   iterations: 3,
   parallelism: 1,
   hashLength: 32,

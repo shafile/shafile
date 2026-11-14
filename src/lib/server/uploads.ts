@@ -47,24 +47,24 @@ export async function savePart(
   const chunkSize = row.chunk_size ?? CHUNK_SIZE;
   if (length > chunkSize + 16) throw new AppError("INVALID_REQUEST", 413);
 
-  await writePart(row.id, index, body);
-
   const db = await getDb();
+  const allowance = getMaxFileBytes() + (row.chunk_count ?? 0) * 20 + 4096;
+  const existing = await db.get<{ total: number }>(
+    `SELECT COALESCE(SUM(bytes), 0) AS total FROM upload_parts
+     WHERE upload_id = ? AND idx != ?`,
+    [row.id, index],
+  );
+  if (Number(existing?.total ?? 0) + body.length > allowance) {
+    throw new AppError("FILE_TOO_LARGE", 413);
+  }
+
+  await writePart(row.id, index, body);
   await db.run(
     `INSERT INTO upload_parts (upload_id, idx, bytes)
      VALUES (?, ?, ?)
      ON CONFLICT(upload_id, idx) DO UPDATE SET bytes = excluded.bytes`,
     [row.id, index, body.length],
   );
-
-  const sizes = await db.get<{ total: number }>(
-    "SELECT COALESCE(SUM(bytes), 0) AS total FROM upload_parts WHERE upload_id = ?",
-    [row.id],
-  );
-  const allowance = getMaxFileBytes() + (row.chunk_count ?? 0) * 20 + 4096;
-  if (Number(sizes?.total ?? 0) > allowance) {
-    throw new AppError("FILE_TOO_LARGE", 413);
-  }
 }
 
 export async function uploadedIndices(shareId: string): Promise<number[]> {

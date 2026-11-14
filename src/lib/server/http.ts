@@ -43,7 +43,15 @@ export function apiError(
   status = 400,
   params?: Record<string, string | number>,
 ): Response {
-  return apiJson({ error: { code, ...(params ? { params } : {}) } }, status);
+  const retryAfter =
+    code === "RATE_LIMITED" && params?.retryAfterSeconds
+      ? String(params.retryAfterSeconds)
+      : undefined;
+  return apiJson(
+    { error: { code, ...(params ? { params } : {}) } },
+    status,
+    retryAfter ? { "Retry-After": retryAfter } : undefined,
+  );
 }
 
 export function routeError(error: unknown): Response {

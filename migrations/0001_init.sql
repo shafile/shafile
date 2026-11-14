@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS shares (
   wrap_nonce BLOB,
   kdf_params TEXT,
   manage_token_hash BLOB NOT NULL,
+  telegram_user_hash BLOB,
   upload_token_hash BLOB,
   manifest_hash BLOB,
   blob_bytes INTEGER NOT NULL DEFAULT 0,

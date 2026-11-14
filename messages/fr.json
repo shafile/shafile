@@ -266,6 +266,7 @@
     "INVALID_PASSWORD": "Ce mot de passe ne fonctionne pas.",
     "RATE_LIMITED": "Trop de tentatives. Patientez un instant et réessayez.",
     "ACCESS_TOKEN_INVALID": "Votre fenêtre d’accès a expiré. Réessayez.",
+    "retryAfter": "Réessayez dans {seconds} s.",
     "UNAUTHORIZED": "Vous n’êtes pas autorisé à faire cela.",
     "KEY_MISSING": "La clé de déchiffrement manque dans le lien.",
     "CORRUPT_DATA": "Les données chiffrées ont échoué au contrôle d’intégrité.",
