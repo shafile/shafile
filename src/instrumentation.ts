@@ -16,9 +16,10 @@ export async function register() {
   if (isCloudflareRuntime()) return;
 
   if (process.env.TRUST_PROXY !== "true") {
-    console.warn(
-      "[shafile] TRUST_PROXY is not enabled. Per-client rate limiting will collapse to a single bucket; set TRUST_PROXY=true when running behind a reverse proxy or tunnel.",
-    );
+    const message =
+      "[shafile] TRUST_PROXY is not enabled. Per-client rate limiting will collapse to a single bucket; set TRUST_PROXY=true when running behind a reverse proxy or tunnel.";
+    if (process.env.NODE_ENV === "production") console.error(message);
+    else console.warn(message);
   }
   ensureDataDirs();
   await getDb();

@@ -205,6 +205,8 @@
     "keyMissingTelegramDesc": "이 Mini App 링크에는 복호화 키가 없습니다. 만든 사람이 보낸 원래 공유 링크를 사용하세요."
   },
   "Manage": {
+    "exportBackup": "백업 내보내기",
+    "importBackup": "백업 가져오기",
     "title": "내 공유",
     "subtitle": "관리 토큰은 이 브라우저에만 저장됩니다. 사이트 데이터를 지우면 이 목록도 사라집니다.",
     "localOnly": "이 브라우저에서만",

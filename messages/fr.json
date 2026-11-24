@@ -205,6 +205,8 @@
     "keyMissingTelegramDesc": "Ce lien Mini App ne contient pas la clé de déchiffrement. Utilisez le lien de partage d'origine fourni par le créateur."
   },
   "Manage": {
+    "exportBackup": "Exporter la sauvegarde",
+    "importBackup": "Importer la sauvegarde",
     "title": "Mes partages",
     "subtitle": "Les jetons de gestion sont stockés uniquement dans ce navigateur. Effacer les données du site supprime cette liste.",
     "localOnly": "Local à ce navigateur",

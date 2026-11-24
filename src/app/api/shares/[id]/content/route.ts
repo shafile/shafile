@@ -34,8 +34,8 @@ export async function GET(
       throw new AppError("FILE_MISSING", 410);
     }
 
-    const consumed = await consumeView(id);
     const payload = await readTextBlob(id);
+    const consumed = await consumeView(id);
     try {
       await maybePurge(id);
     } catch (error) {

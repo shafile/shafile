@@ -205,6 +205,8 @@
     "keyMissingTelegramDesc": "この Mini App リンクには復号キーが含まれていません。作成者が送った元の共有リンクを使用してください。"
   },
   "Manage": {
+    "exportBackup": "バックアップを書き出す",
+    "importBackup": "バックアップを読み込む",
     "title": "自分の共有",
     "subtitle": "管理トークンはこのブラウザにだけ保存されます。サイトデータを消すと一覧も消えます。",
     "localOnly": "このブラウザ内のみ",

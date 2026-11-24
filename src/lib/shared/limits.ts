@@ -8,6 +8,7 @@ export const BURN_GRACE_MS = 10 * 60 * 1000;
 export const DRAFT_TTL_MS = 24 * 60 * 60 * 1000;
 export const REVOKED_GRACE_MS = 60 * 60 * 1000;
 export const TOMBSTONE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+export const MAX_EXPIRY_MS = 366 * 24 * 60 * 60 * 1000;
 
 export const SHARE_ID_PATTERN = /^[A-Za-z0-9_-]{22}$/;
 export const PASSWORD_MIN_LENGTH = 8;

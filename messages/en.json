@@ -205,6 +205,8 @@
     "keyMissingTelegramDesc": "This Mini App link does not include the decryption key. Use the original share link from the creator."
   },
   "Manage": {
+    "exportBackup": "Export backup",
+    "importBackup": "Import backup",
     "title": "My shares",
     "subtitle": "Management tokens are stored only in this browser. Clearing site data removes this list.",
     "localOnly": "Local to this browser",

@@ -32,9 +32,7 @@
   ],
   "vars": {
     "SHAFILE_RUNTIME": "cloudflare",
-    "TRUST_PROXY": "true",
-    "TELEGRAM_BOT_USERNAME": "shafiledev_bot",
-    "TELEGRAM_MINI_APP_SHORT_NAME": "shafile"
+    "TRUST_PROXY": "true"
   },
   "triggers": {
     "crons": ["* * * * *"]

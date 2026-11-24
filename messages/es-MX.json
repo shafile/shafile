@@ -205,6 +205,8 @@
     "keyMissingTelegramDesc": "Este enlace de Mini App no incluye la clave de descifrado. Usa el enlace original que envió el creador."
   },
   "Manage": {
+    "exportBackup": "Exportar copia",
+    "importBackup": "Importar copia",
     "title": "Mis enlaces",
     "subtitle": "Los tokens de administración solo se guardan en este navegador. Si borras los datos del sitio, esta lista desaparece.",
     "localOnly": "Solo en este navegador",

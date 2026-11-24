@@ -89,9 +89,16 @@ openssl rand -base64 32
   "SHAFILE_RUNTIME": "cloudflare",
   "TRUST_PROXY": "true",
   "MAX_SHARE_BYTES": "5368709120",
-  "MAX_STORAGE_BYTES": "9663676416"
+  "MAX_STORAGE_BYTES": "9663676416",
+  "PASSWORD_KDF_MIN_MEMORY": "65536",
+  "PASSWORD_KDF_MIN_ITERATIONS": "3",
+  "CLEANUP_BUDGET": "3",
+  "TELEGRAM_BOT_USERNAME": "your_bot",
+  "TELEGRAM_MINI_APP_SHORT_NAME": "shafile"
 }
 ```
+
+`TELEGRAM_BOT_USERNAME` 和 `TELEGRAM_MINI_APP_SHORT_NAME` 不写入仓库内的 `wrangler.jsonc`，以便本地 `.dev.vars` 使用 E2E 值；生产环境可在控制台或 `wrangler.jsonc` 设置。`PASSWORD_KDF_MIN_*` 控制密码 KDF 下限，`CLEANUP_BUDGET` 控制每次 Cron 的清理操作数。
 
 `MAX_STORAGE_BYTES` 是密文总预算，应低于 D1/R2 套餐额度，并为 manifest 和 header 留出空间。Workers 上未设置时默认 9 GiB；R2 免费版为 10 GB。示例配置也使用约 9 GiB。
 
@@ -149,7 +156,7 @@ OpenNext 官方提示 Windows 支持不完整。若构建在读取 pnpm 符号�
 - Workers 免费版每请求 10 ms CPU。Shafile 服务端主要是 D1/R2 I/O，但高流量场景可能需要 Workers Paid。
 - Cloudflare 免费版请求体上限约 100 MB；Shafile 使用 4 MiB 加密分块，正常上传不受影响。
 - Workers 免费版每次调用限制 50 个子请求。流式下载每 4 MiB 分块读取一次 R2，因此超大分享可能超限。免费版建议控制在约 100 MB 以内；多 GB 文件请使用 Workers Paid（10,000 子请求）。
-- 清理任务每次 Cron 最多处理 3 个分享，避免超过免费版子请求限制。
+- 清理任务通过 `CLEANUP_BUDGET`（默认 3）限制每次 Cron 的处理量，避免超过免费版子请求限制。
 - D1 是元数据唯一事实来源，请使用 D1 export/import 备份。
 - R2 保存密文。若配置生命周期规则，需要同时考虑墓碑和元数据清理。
 - 不要把 `TICKET_SECRET`、`IP_HASH_SECRET`、`CRON_SECRET` 或 `.dev.vars` 提交到 git。

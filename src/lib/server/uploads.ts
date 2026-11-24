@@ -58,6 +58,16 @@ export async function savePart(
     throw new AppError("FILE_TOO_LARGE", 413);
   }
 
+  const current = await db.get<{ bytes: number }>(
+    "SELECT bytes FROM upload_parts WHERE upload_id = ? AND idx = ?",
+    [row.id, index],
+  );
+  const projectedStorage =
+    (await storageUsedBytes()) - Number(current?.bytes ?? 0) + body.length;
+  if (projectedStorage > getMaxStorageBytes()) {
+    throw new AppError("STORAGE_FULL", 507);
+  }
+
   await writePart(row.id, index, body);
   await db.run(
     `INSERT INTO upload_parts (upload_id, idx, bytes)

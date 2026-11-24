@@ -205,6 +205,8 @@
     "keyMissingTelegramDesc": "Dieser Mini-App-Link enthält keinen Entschlüsselungsschlüssel. Verwende den ursprünglichen Freigabelink des Erstellers."
   },
   "Manage": {
+    "exportBackup": "Backup exportieren",
+    "importBackup": "Backup importieren",
     "title": "Meine Freigaben",
     "subtitle": "Verwaltungstoken werden nur in diesem Browser gespeichert. Das Löschen der Websitedaten entfernt diese Liste.",
     "localOnly": "Nur in diesem Browser",

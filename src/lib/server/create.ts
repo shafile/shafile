@@ -2,6 +2,7 @@ import { getDb, getShareRow, type ShareRow } from "./db";
 import { AppError } from "./http";
 import {
   CHUNK_SIZE,
+  MAX_EXPIRY_MS,
   MAX_TEXT_BYTES,
   MAX_VIEWS,
   SHARE_ID_PATTERN,
@@ -94,13 +95,20 @@ function validateCommon(input: {
   const now = Date.now();
   const requestedStart = input.startAt;
   const startAt =
-    requestedStart === null || requestedStart <= now + 5000
-      ? now - 5000
+    requestedStart === null || requestedStart <= now + 2000
+      ? now - 2000
       : requestedStart;
-  if (startAt > now + 366 * 24 * 60 * 60 * 1000) {
+  if (startAt > now + MAX_EXPIRY_MS) {
     throw new AppError("INVALID_SCHEDULE", 400);
   }
-  if (input.expiresAt !== null && input.expiresAt <= Math.max(now, startAt)) {
+  const expiryBase = Math.max(now, startAt);
+  if (input.expiresAt !== null && input.expiresAt <= expiryBase) {
+    throw new AppError("INVALID_SCHEDULE", 400);
+  }
+  if (
+    input.expiresAt !== null &&
+    input.expiresAt > expiryBase + MAX_EXPIRY_MS
+  ) {
     throw new AppError("INVALID_SCHEDULE", 400);
   }
   if (
@@ -229,7 +237,7 @@ export async function createFileShare(input: FileShareInput): Promise<{
   if (!Number.isInteger(input.chunkSize) || input.chunkSize !== CHUNK_SIZE) {
     throw new AppError("INVALID_REQUEST", 400, { field: "chunkSize" });
   }
-  const maxChunks = Math.ceil(getMaxFileBytes() / CHUNK_SIZE) + 1;
+  const maxChunks = Math.max(1, Math.ceil(getMaxFileBytes() / CHUNK_SIZE));
   if (
     !Number.isInteger(input.chunkCount) ||
     input.chunkCount < 1 ||
