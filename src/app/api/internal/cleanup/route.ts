@@ -1,4 +1,5 @@
 import { AppError, apiJson, routeError } from "@/lib/server/http";
+import { safeEqualStrings } from "@/lib/server/tokens";
 import { runCleanup } from "@/lib/server/shares";
 
 export const runtime = "nodejs";
@@ -8,7 +9,11 @@ export async function POST(request: Request) {
   try {
     const secret = process.env.CRON_SECRET;
     const authorization = request.headers.get("authorization");
-    if (!secret || authorization !== `Bearer ${secret}`) {
+    if (
+      !secret ||
+      !authorization ||
+      !safeEqualStrings(authorization, `Bearer ${secret}`)
+    ) {
       throw new AppError("UNAUTHORIZED", 401);
     }
     await runCleanup();

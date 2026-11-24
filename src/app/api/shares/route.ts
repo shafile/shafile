@@ -61,7 +61,7 @@ export async function POST(request: Request) {
       20,
       60 * 60 * 1000,
     );
-    if (!limit.allowed) throw new AppError("RATE_LIMITED", 429);
+    if (!limit.allowed) throw new AppError("RATE_LIMITED", 429, { retryAfterSeconds: limit.retryAfterSeconds });
 
     const session = optionalTelegramSession(request);
     const raw = await readJsonLimited(request, 1024 * 1024);

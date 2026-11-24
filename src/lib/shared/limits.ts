@@ -8,6 +8,7 @@ export const BURN_GRACE_MS = 10 * 60 * 1000;
 export const DRAFT_TTL_MS = 24 * 60 * 60 * 1000;
 export const REVOKED_GRACE_MS = 60 * 60 * 1000;
 export const TOMBSTONE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+export const MAX_EXPIRY_MS = 366 * 24 * 60 * 60 * 1000;
 
 export const SHARE_ID_PATTERN = /^[A-Za-z0-9_-]{22}$/;
 export const PASSWORD_MIN_LENGTH = 8;
@@ -23,4 +24,14 @@ export function getMaxStorageBytes(): number {
   return process.env.SHAFILE_RUNTIME === "cloudflare"
     ? 9 * 1024 * 1024 * 1024
     : 50 * 1024 * 1024 * 1024;
+}
+
+export function getPasswordKdfMinMemory(): number {
+  const parsed = Number(process.env.PASSWORD_KDF_MIN_MEMORY ?? "");
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 65_536;
+}
+
+export function getPasswordKdfMinIterations(): number {
+  const parsed = Number(process.env.PASSWORD_KDF_MIN_ITERATIONS ?? "");
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 3;
 }

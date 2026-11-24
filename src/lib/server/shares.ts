@@ -145,6 +145,20 @@ export async function consumeView(
   return { views: updated.views, maxViews: updated.max_views };
 }
 
+export async function releaseView(id: string): Promise<void> {
+  const db = await getDb();
+  await db.run(
+    `UPDATE shares
+     SET views = MAX(0, views - 1),
+         burn_at = CASE
+           WHEN max_views IS NOT NULL AND views - 1 < max_views THEN NULL
+           ELSE burn_at
+         END
+     WHERE id = ? AND status = 'ready' AND views > 0`,
+    [id],
+  );
+}
+
 export async function beginActiveStream(id: string, now = Date.now()): Promise<void> {
   const db = await getDb();
   await db.run(
@@ -159,16 +173,16 @@ export async function beginActiveStream(id: string, now = Date.now()): Promise<v
 
 export async function endActiveStream(id: string): Promise<void> {
   const db = await getDb();
-  const row = await db.get<{ count: number }>(
-    "SELECT count FROM active_streams WHERE share_id = ?",
-    [id],
+  const decremented = await db.run(
+    `UPDATE active_streams
+     SET count = count - 1, updated_at = ?
+     WHERE share_id = ? AND count > 1`,
+    [Date.now(), id],
   );
-  if (!row || row.count <= 1) {
-    await db.run("DELETE FROM active_streams WHERE share_id = ?", [id]);
-  } else {
+  if (decremented.changes === 0) {
     await db.run(
-      "UPDATE active_streams SET count = count - 1, updated_at = ? WHERE share_id = ?",
-      [Date.now(), id],
+      "DELETE FROM active_streams WHERE share_id = ? AND count <= 1",
+      [id],
     );
   }
   try {
@@ -176,6 +190,17 @@ export async function endActiveStream(id: string): Promise<void> {
   } catch (error) {
     console.error("[shafile] post-download cleanup failed", error);
   }
+}
+
+export async function touchActiveStream(
+  id: string,
+  now = Date.now(),
+): Promise<void> {
+  const db = await getDb();
+  await db.run(
+    "UPDATE active_streams SET updated_at = ? WHERE share_id = ?",
+    [now, id],
+  );
 }
 
 async function hasActiveStream(id: string): Promise<boolean> {
@@ -326,10 +351,14 @@ export async function runCleanup(now = Date.now()): Promise<void> {
   cleaning = true;
   try {
     const db = await getDb();
-    let budget = 3;
+    const budgetRaw = Number(process.env.CLEANUP_BUDGET ?? "");
+    let budget =
+      Number.isFinite(budgetRaw) && budgetRaw >= 1
+        ? Math.floor(budgetRaw)
+        : 3;
 
     const drafts = await db.all<ShareRow>(
-      "SELECT * FROM shares WHERE status = 'draft'",
+      "SELECT * FROM shares WHERE status = 'draft' LIMIT 200",
     );
     for (const row of drafts) {
       if (budget <= 0) break;
@@ -344,7 +373,9 @@ export async function runCleanup(now = Date.now()): Promise<void> {
 
     const pending = await db.all<ShareRow>(
       `SELECT * FROM shares
-       WHERE status IN ('ready', 'revoked', 'expired', 'burned')`,
+       WHERE status IN ('ready', 'revoked', 'expired', 'burned')
+       ORDER BY created_at ASC
+       LIMIT 200`,
     );
 
     for (const row of pending) {

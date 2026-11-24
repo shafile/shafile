@@ -2,11 +2,14 @@ import { getDb, getShareRow, type ShareRow } from "./db";
 import { AppError } from "./http";
 import {
   CHUNK_SIZE,
+  MAX_EXPIRY_MS,
   MAX_TEXT_BYTES,
   MAX_VIEWS,
   SHARE_ID_PATTERN,
   getMaxFileBytes,
   getMaxStorageBytes,
+  getPasswordKdfMinIterations,
+  getPasswordKdfMinMemory,
 } from "@/lib/shared/limits";
 import { base64UrlToBytes } from "@/lib/shared/encoding";
 import {
@@ -92,13 +95,20 @@ function validateCommon(input: {
   const now = Date.now();
   const requestedStart = input.startAt;
   const startAt =
-    requestedStart === null || requestedStart <= now + 5000
-      ? now - 5000
+    requestedStart === null || requestedStart <= now + 2000
+      ? now - 2000
       : requestedStart;
-  if (startAt > now + 366 * 24 * 60 * 60 * 1000) {
+  if (startAt > now + MAX_EXPIRY_MS) {
     throw new AppError("INVALID_SCHEDULE", 400);
   }
-  if (input.expiresAt !== null && input.expiresAt <= Math.max(now, startAt)) {
+  const expiryBase = Math.max(now, startAt);
+  if (input.expiresAt !== null && input.expiresAt <= expiryBase) {
+    throw new AppError("INVALID_SCHEDULE", 400);
+  }
+  if (
+    input.expiresAt !== null &&
+    input.expiresAt > expiryBase + MAX_EXPIRY_MS
+  ) {
     throw new AppError("INVALID_SCHEDULE", 400);
   }
   if (
@@ -130,9 +140,9 @@ function validateCommon(input: {
       kdf.alg !== "argon2id" ||
       kdf.version !== 1 ||
       kdf.hashLength !== 32 ||
-      kdf.memorySize < 16_384 ||
+      kdf.memorySize < getPasswordKdfMinMemory() ||
       kdf.memorySize > 262_144 ||
-      kdf.iterations < 1 ||
+      kdf.iterations < getPasswordKdfMinIterations() ||
       kdf.iterations > 10 ||
       kdf.parallelism < 1 ||
       kdf.parallelism > 4
@@ -227,7 +237,7 @@ export async function createFileShare(input: FileShareInput): Promise<{
   if (!Number.isInteger(input.chunkSize) || input.chunkSize !== CHUNK_SIZE) {
     throw new AppError("INVALID_REQUEST", 400, { field: "chunkSize" });
   }
-  const maxChunks = Math.ceil(getMaxFileBytes() / CHUNK_SIZE) + 1;
+  const maxChunks = Math.max(1, Math.ceil(getMaxFileBytes() / CHUNK_SIZE));
   if (
     !Number.isInteger(input.chunkCount) ||
     input.chunkCount < 1 ||

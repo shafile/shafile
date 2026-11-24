@@ -205,6 +205,8 @@
     "keyMissingTelegramDesc": "이 Mini App 링크에는 복호화 키가 없습니다. 만든 사람이 보낸 원래 공유 링크를 사용하세요."
   },
   "Manage": {
+    "exportBackup": "백업 내보내기",
+    "importBackup": "백업 가져오기",
     "title": "내 공유",
     "subtitle": "관리 토큰은 이 브라우저에만 저장됩니다. 사이트 데이터를 지우면 이 목록도 사라집니다.",
     "localOnly": "이 브라우저에서만",
@@ -266,6 +268,7 @@
     "INVALID_PASSWORD": "비밀번호가 맞지 않습니다.",
     "RATE_LIMITED": "시도가 너무 많습니다. 잠시 후 다시 시도하세요.",
     "ACCESS_TOKEN_INVALID": "접근 시간이 만료되었습니다. 다시 시도하세요.",
+    "retryAfter": "{seconds}초 후 다시 시도하세요.",
     "UNAUTHORIZED": "이 작업을 수행할 권한이 없습니다.",
     "KEY_MISSING": "링크에 복호화 키가 없습니다.",
     "CORRUPT_DATA": "암호화된 데이터가 무결성 검사를 통과하지 못했습니다.",

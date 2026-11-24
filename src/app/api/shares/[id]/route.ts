@@ -16,7 +16,7 @@ export async function GET(
       120,
       60 * 1000,
     );
-    if (!limit.allowed) throw new AppError("RATE_LIMITED", 429);
+    if (!limit.allowed) throw new AppError("RATE_LIMITED", 429, { retryAfterSeconds: limit.retryAfterSeconds });
 
     const row = await requireShare(id);
     const meta = toShareMeta(row);

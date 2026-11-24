@@ -1,11 +1,12 @@
 {
   "name": "shafile",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "private": true,
   "author": "Wang Laoju <hello@laoju.wang>",
   "license": "MIT",
   "scripts": {
     "dev": "next dev",
+    "dev:stable": "next dev --no-server-fast-refresh",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -20,11 +21,10 @@
     "cf:typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
   },
   "dependencies": {
-    "@opennextjs/cloudflare": "1.20.13",
     "clsx": "^2.1.1",
     "hash-wasm": "^4.12.0",
     "lucide-react": "^1.60.0",
-    "next": "16.4.2",
+    "next": "16.4.6",
     "next-intl": "^4.14.9",
     "qrcode": "^1.5.4",
     "react": "19.3.0",
@@ -37,6 +37,7 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20261021.1",
+    "@opennextjs/cloudflare": "1.20.13",
     "@playwright/test": "^1.64.1",
     "@tailwindcss/turbopack": "^4",
     "@types/node": "^26.6.5",
@@ -44,7 +45,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.4.2",
+    "eslint-config-next": "16.4.6",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^5.0.5",

@@ -10,7 +10,7 @@ export async function SiteFooter() {
           <ShieldCheck size={17} className="text-green" />
           <span>{t("footerNote")}</span>
         </div>
-        <span className="text-xs uppercase tracking-[0.18em]">{t("footerSecurity")}</span>
+        <span className="text-xs text-muted">{t("footerSecurity")}</span>
       </div>
     </footer>
   );
