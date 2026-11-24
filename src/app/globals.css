@@ -462,7 +462,7 @@
   }
 
   .hero {
-    padding-block: clamp(4rem, 8vw, 7.5rem) clamp(3rem, 6vw, 5.5rem);
+    padding-block: clamp(5.5rem, 10vw, 9rem) clamp(4.5rem, 8vw, 7rem);
     text-align: center;
   }
 
@@ -476,7 +476,7 @@
 
   .hero-lede {
     max-width: 42rem;
-    margin: 1.5rem auto 0;
+    margin: 1.75rem auto 0;
     color: var(--muted);
     font-size: clamp(1rem, 1.6vw, 1.16rem);
     line-height: 1.7;
@@ -484,8 +484,8 @@
 
   .hero-composer {
     display: flex;
-    max-width: 44rem;
-    margin: 2.5rem auto 0;
+    max-width: 46rem;
+    margin: 2.75rem auto 0;
     align-items: center;
     gap: 0.9rem;
     border: 1px solid var(--line);
@@ -693,8 +693,8 @@
     cursor: pointer;
     gap: 0.75rem;
     border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 0.8rem;
+    border-radius: 12px;
+    padding: 0.9rem;
     background: var(--surface);
     transition: border-color 160ms ease, background 160ms ease;
   }
@@ -704,8 +704,8 @@
   }
 
   .choice-card.is-active {
-    border-color: var(--brand);
-    background: var(--brand-soft);
+    border-color: var(--foreground);
+    background: var(--surface);
   }
 
   .dropzone {

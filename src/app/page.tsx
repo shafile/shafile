@@ -131,7 +131,7 @@ export default async function HomePage() {
         </section>
 
         <section
-          className="container-page border-t border-line py-14 lg:py-16"
+          className="container-page border-t border-line py-20 lg:py-24"
           aria-labelledby="features-title"
         >
           <h2 id="features-title" className="sr-only">
@@ -152,7 +152,7 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section id="how" className="container-page scroll-mt-24 py-14 lg:py-20">
+        <section id="how" className="container-page scroll-mt-24 py-20 lg:py-28">
           <div className="max-w-2xl">
             <h2 className="section-title text-balance">{t("howTitle")}</h2>
             <p className="mt-4 text-base leading-7 text-muted">
@@ -176,7 +176,7 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section className="container-page border-t border-line py-14 lg:py-20">
+        <section className="container-page border-t border-line py-20 lg:py-28">
           <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
             <div>
               <span className="eyebrow">{t("trustTitle")}</span>
@@ -207,7 +207,7 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section className="container-page pb-8 pt-8">
+        <section className="container-page py-16 lg:py-20">
           <div className="rounded-2xl border border-line bg-surface px-6 py-10 sm:px-10 lg:flex lg:items-center lg:justify-between lg:gap-10">
             <div className="max-w-xl">
               <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
