@@ -205,6 +205,8 @@
     "keyMissingTelegramDesc": "この Mini App リンクには復号キーが含まれていません。作成者が送った元の共有リンクを使用してください。"
   },
   "Manage": {
+    "exportBackup": "バックアップを書き出す",
+    "importBackup": "バックアップを読み込む",
     "title": "自分の共有",
     "subtitle": "管理トークンはこのブラウザにだけ保存されます。サイトデータを消すと一覧も消えます。",
     "localOnly": "このブラウザ内のみ",
@@ -266,6 +268,7 @@
     "INVALID_PASSWORD": "パスワードが違います。",
     "RATE_LIMITED": "試行回数が多すぎます。少し待ってから再試行してください。",
     "ACCESS_TOKEN_INVALID": "アクセス期限が切れました。もう一度お試しください。",
+    "retryAfter": "{seconds} 秒後にもう一度お試しください。",
     "UNAUTHORIZED": "この操作は許可されていません。",
     "KEY_MISSING": "リンクに復号鍵がありません。",
     "CORRUPT_DATA": "暗号化データの完全性チェックに失敗しました。",

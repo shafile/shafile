@@ -173,7 +173,7 @@ test("file upload shows encrypted manifest and streams a verified download", asy
   });
 
   await page.goto("/create");
-  await page.getByRole("button", { name: "File", exact: true }).click();
+  await page.getByRole("tab", { name: "File", exact: true }).click();
   await page.locator('input[type="file"]').setInputFiles({
     name: "playwright-file.bin",
     mimeType: "application/octet-stream",

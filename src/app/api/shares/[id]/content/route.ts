@@ -23,7 +23,7 @@ export async function GET(
       30,
       60 * 1000,
     );
-    if (!limit.allowed) throw new AppError("RATE_LIMITED", 429);
+    if (!limit.allowed) throw new AppError("RATE_LIMITED", 429, { retryAfterSeconds: limit.retryAfterSeconds });
 
     requireAccessToken(request, id);
     const row = await requireShare(id);
@@ -34,8 +34,8 @@ export async function GET(
       throw new AppError("FILE_MISSING", 410);
     }
 
-    const consumed = await consumeView(id);
     const payload = await readTextBlob(id);
+    const consumed = await consumeView(id);
     try {
       await maybePurge(id);
     } catch (error) {

@@ -599,32 +599,42 @@ export function CreateForm({ maxFileBytes }: { maxFileBytes: number }) {
   }
 
   return (
-    <div className="container-page grid gap-6 py-10 lg:grid-cols-[1.2fr_0.8fr] lg:py-14">
+    <div className="container-page grid gap-10 py-14 lg:grid-cols-[1.15fr_0.85fr] lg:gap-16 lg:py-20">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{t("title")}</h1>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">{t("subtitle")}</p>
+        <h1 className="text-3xl font-bold tracking-tight sm:text-5xl">
+          {t("title")}
+        </h1>
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-muted sm:text-base">
+          {t("subtitle")}
+        </p>
 
-        <form onSubmit={handleSubmit} className="card mt-6 overflow-hidden">
-          <div className="flex gap-2 border-b border-line px-4 pt-4 sm:px-6">
-            <button
-              type="button"
-              className={`tab-button ${mode === "text" ? "is-active" : ""}`}
-              onClick={() => setMode("text")}
-              disabled={working}
-            >
-              {t("tabText")}
-            </button>
-            <button
-              type="button"
-              className={`tab-button ${mode === "file" ? "is-active" : ""}`}
-              onClick={() => setMode("file")}
-              disabled={working}
-            >
-              {t("tabFile")}
-            </button>
+        <form onSubmit={handleSubmit} className="card mt-8 overflow-hidden">
+          <div className="flex items-center gap-3 border-b border-line px-5 py-3 sm:px-7">
+            <div className="segmented" role="tablist" aria-label={t("title")}>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={mode === "text"}
+                className={mode === "text" ? "is-active" : ""}
+                onClick={() => setMode("text")}
+                disabled={working}
+              >
+                {t("tabText")}
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={mode === "file"}
+                className={mode === "file" ? "is-active" : ""}
+                onClick={() => setMode("file")}
+                disabled={working}
+              >
+                {t("tabFile")}
+              </button>
+            </div>
           </div>
 
-          <fieldset disabled={working} className="space-y-6 p-4 sm:p-6">
+          <fieldset disabled={working} className="space-y-8 p-5 sm:p-8">
             {mode === "text" ? (
               <div>
                 <label className="label" htmlFor="share-text">
@@ -705,7 +715,9 @@ export function CreateForm({ maxFileBytes }: { maxFileBytes: number }) {
             )}
 
             <div className="border-t border-line pt-6">
-              <h2 className="text-base font-bold tracking-tight">{t("settingsTitle")}</h2>
+              <h2 className="text-lg font-semibold tracking-tight">
+                {t("settingsTitle")}
+              </h2>
 
               <div className="mt-4">
                 <span className="label">{t("accessTitle")}</span>
@@ -933,14 +945,14 @@ export function CreateForm({ maxFileBytes }: { maxFileBytes: number }) {
         </form>
       </div>
 
-      <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
-        <div className="card p-5">
+      <aside className="lg:sticky lg:top-28 lg:self-start">
+        <div className="card p-6">
           <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-soft text-brand">
             <ShieldCheck size={20} />
           </span>
-          <h2 className="mt-3 text-base font-bold">{t("securityTitle")}</h2>
+          <h2 className="mt-4 text-base font-semibold">{t("securityTitle")}</h2>
           <p className="mt-2 text-sm leading-6 text-muted">{t("securityHint")}</p>
-          <ul className="mt-4 space-y-3 text-sm leading-6">
+          <ul className="mt-5 space-y-3 text-sm leading-6">
             <li className="flex gap-2">
               <LockKeyhole size={16} className="mt-1 shrink-0 text-green-strong" />
               <span>{common("footerNote")}</span>
@@ -954,15 +966,15 @@ export function CreateForm({ maxFileBytes }: { maxFileBytes: number }) {
               <span>{t("warningServer")}</span>
             </li>
           </ul>
-        </div>
-        <div className="card-soft p-5 text-sm leading-6 text-muted">
-          <div className="flex items-center gap-2 font-bold text-foreground">
-            <Timer size={17} className="text-brand" />
-            {t("scheduleTitle")}
+          <div className="mt-6 border-t border-line pt-5">
+            <div className="flex items-center gap-2 text-sm font-semibold">
+              <Timer size={16} className="text-brand" />
+              {t("scheduleTitle")}
+            </div>
+            <p className="mt-2 text-sm leading-6 text-muted">
+              {t("warningBurn")} {t("warningPassword")}
+            </p>
           </div>
-          <p className="mt-2">
-            {t("warningBurn")} {t("warningPassword")}
-          </p>
         </div>
       </aside>
     </div>

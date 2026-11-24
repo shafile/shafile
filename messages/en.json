@@ -205,6 +205,8 @@
     "keyMissingTelegramDesc": "This Mini App link does not include the decryption key. Use the original share link from the creator."
   },
   "Manage": {
+    "exportBackup": "Export backup",
+    "importBackup": "Import backup",
     "title": "My shares",
     "subtitle": "Management tokens are stored only in this browser. Clearing site data removes this list.",
     "localOnly": "Local to this browser",
@@ -266,6 +268,7 @@
     "INVALID_PASSWORD": "That password did not work.",
     "RATE_LIMITED": "Too many attempts. Wait a moment and try again.",
     "ACCESS_TOKEN_INVALID": "Your access window expired. Try again.",
+    "retryAfter": "Retry in {seconds}s.",
     "UNAUTHORIZED": "You are not allowed to do that.",
     "KEY_MISSING": "The decryption key is missing from the link.",
     "CORRUPT_DATA": "The encrypted data failed its integrity check.",

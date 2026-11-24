@@ -205,6 +205,8 @@
     "keyMissingTelegramDesc": "此 Mini App 链接不包含解密密钥，请使用创建者发送的原始分享链接。"
   },
   "Manage": {
+    "exportBackup": "导出备份",
+    "importBackup": "导入备份",
     "title": "我的分享",
     "subtitle": "管理令牌只保存在当前浏览器。清除站点数据后，这份列表也会消失。",
     "localOnly": "仅限当前浏览器",
@@ -266,6 +268,7 @@
     "INVALID_PASSWORD": "密码不正确。",
     "RATE_LIMITED": "尝试次数过多，请稍后再试。",
     "ACCESS_TOKEN_INVALID": "访问凭证已过期，请重试。",
+    "retryAfter": "{seconds} 秒后重试。",
     "UNAUTHORIZED": "你没有权限执行此操作。",
     "KEY_MISSING": "链接中缺少解密密钥。",
     "CORRUPT_DATA": "加密数据未通过完整性校验。",
