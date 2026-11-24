@@ -27,6 +27,8 @@ pnpm install
 pnpm dev
 ```
 
+如果在 Windows 或网络盘上 Fast Refresh 反复刷新页面，请使用 `pnpm dev:stable`（仅客户端刷新）。
+
 打开 <http://localhost:3000>。首次启动会自动创建：
 
 - `data/shafile.db`：SQLite 元数据

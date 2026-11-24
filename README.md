@@ -27,6 +27,8 @@ pnpm install
 pnpm dev
 ```
 
+If Fast Refresh repeatedly reloads the page on Windows or a network drive, use `pnpm dev:stable` (client refresh only).
+
 Open <http://localhost:3000>. The first start creates:
 
 - `data/shafile.db`: SQLite metadata
