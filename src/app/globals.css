@@ -195,7 +195,6 @@
     top: 0;
     z-index: 40;
     padding-top: var(--safe-top);
-    border-bottom: 1px solid var(--line);
     background: var(--background);
   }
 
