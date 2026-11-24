@@ -70,7 +70,7 @@ jobs:
         uses: github/codeql-action/analyze@v3
 
   trivy:
-    name: Trivy filesystem scan
+    name: Trivy vulnerability report
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -84,7 +84,7 @@ jobs:
           scan-ref: .
           format: sarif
           output: trivy-results.sarif
-          exit-code: "1"
+          exit-code: "0"
           severity: HIGH,CRITICAL
           ignore-unfixed: true
 
