@@ -88,7 +88,7 @@ docker compose up --build -d
 
 The app is available at `http://localhost:3000`. Data persists in the `shafile-data` volume. Set `TICKET_SECRET` and `IP_HASH_SECRET` explicitly in production, and adjust limits and `TRUST_PROXY` as needed. The image uses the Next.js standalone output and exposes an `/api/health` health check.
 
-Published image: [`ghcr.io/urwdy/shafile:latest`](https://github.com/urwdy/shafile/pkgs/container/shafile).
+Published image: [`ghcr.io/shafile/shafile:latest`](https://github.com/shafile/shafile/pkgs/container/shafile).
 
 ### Deployment script
 
