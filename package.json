@@ -6,6 +6,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "next dev",
+    "dev:stable": "next dev --no-server-fast-refresh",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
