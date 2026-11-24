@@ -80,10 +80,22 @@ shafile.example.com {
 仓库包含多阶段 `Dockerfile` 和 `docker-compose.yml`。
 
 ```bash
+cp .env.example .env
+# 在 .env 中设置 TICKET_SECRET 和 IP_HASH_SECRET
 docker compose up --build -d
 ```
 
 应用在 `http://localhost:3000` 可用，数据保存在 `shafile-data` 卷。生产环境请显式设置 `TICKET_SECRET`、`IP_HASH_SECRET`，并按需调整上限和 `TRUST_PROXY`。镜像使用 Next.js standalone 输出，并提供 `/api/health` 健康检查。
+
+### 部署脚本
+
+无第三方依赖的 Python 脚本支持本地容器、Cloudflare Tunnel 和 Cloudflare Workers：
+
+```bash
+python scripts/deploy.py
+```
+
+Windows 上容器后端默认使用 `wslc`（在 WSL 内执行 Compose）；Linux 和 macOS 自动探测 Podman、Docker 或 nerdctl。Workers 模式会提示填写账号 Token、Account ID、D1/R2 配置，并生成缺失的 Worker secrets。详见[部署文档](docs/deploy.zh-CN.md)。
 
 ### 持续集成
 
