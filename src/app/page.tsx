@@ -3,7 +3,6 @@ import {
   ArrowRight,
   CalendarClock,
   Check,
-  EyeOff,
   KeyRound,
   LockKeyhole,
   ShieldCheck,
@@ -99,74 +98,35 @@ export default async function HomePage() {
       </div>
 
       <div className="web-home">
-        <section className="container-page grid items-center gap-12 pb-20 pt-14 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:pb-28 lg:pt-24">
-          <div>
-            <span className="eyebrow">{t("eyebrow")}</span>
-            <h1 className="display-title mt-5 max-w-[11ch] text-balance">
-              {t("title")}
-            </h1>
-            <p className="mt-6 max-w-xl text-lg leading-8 text-muted">
-              {t("description")}
-            </p>
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Link href="/create" className="btn btn-accent btn-lg">
-                {t("ctaPrimary")}
-                <ArrowRight size={18} className="directional-icon" />
-              </Link>
-              <a href="#how" className="btn btn-secondary btn-lg">
-                {t("ctaSecondary")}
-              </a>
-            </div>
-            <p className="mt-6 flex items-center gap-2 text-sm text-muted">
-              <EyeOff size={16} className="text-brand" />
-              {t("heroNote")}
-            </p>
-          </div>
+        <section className="container-page hero">
+          <span className="eyebrow">{t("eyebrow")}</span>
+          <h1 className="display-title hero-title mt-5 text-balance">
+            {t("title")}
+          </h1>
+          <p className="hero-lede">{t("description")}</p>
 
-          <div className="hero-visual fade-rise">
-            <div className="flex items-center justify-between gap-3">
-              <span className="chip">
-                <LockKeyhole size={13} className="text-brand" />
-                AES-256-GCM
-              </span>
-              <span className="text-xs text-muted">{t("heroBadge")}</span>
-            </div>
+          <Link href="/create" className="hero-composer">
+            <span className="hero-composer-icon" aria-hidden="true">
+              <LockKeyhole size={20} />
+            </span>
+            <span className="hero-composer-text">
+              <strong>{t("ctaPrimary")}</strong>
+              <small>{t("heroNote")}</small>
+            </span>
+            <span className="hero-composer-arrow" aria-hidden="true">
+              <ArrowRight size={19} className="directional-icon" />
+            </span>
+          </Link>
 
-            <div className="mt-6 rounded-2xl border border-line bg-surface-2 p-5">
-              <div className="flex items-start gap-3">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-background text-brand">
-                  <LockKeyhole size={19} />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-semibold">
-                      {share("textTitle")}
-                    </span>
-                    <span className="badge badge-green">
-                      {share("oneTime")}
-                    </span>
-                  </div>
-                  <div className="mt-4 space-y-2">
-                    <div className="h-2 w-4/5 rounded-full bg-line" />
-                    <div className="h-2 w-full rounded-full bg-line" />
-                    <div className="h-2 w-2/3 rounded-full bg-line" />
-                  </div>
-                </div>
-              </div>
-              <div className="mt-5 flex flex-wrap gap-2">
-                <span className="badge badge-muted">
-                  {share("passwordProtected")}
-                </span>
-                <span className="badge badge-muted">
-                  {share("encryptedInBrowser")}
-                </span>
-              </div>
-            </div>
-
-            <p className="mt-4 flex items-center gap-2 text-xs text-muted">
-              <ShieldCheck size={14} className="text-green" />
-              {common("footerSecurity")}
-            </p>
+          <div className="hero-links">
+            <a href="#how" className="hero-text-link">
+              {t("ctaSecondary")}
+            </a>
+            <span aria-hidden="true">·</span>
+            <span className="hero-inline-note">
+              <ShieldCheck size={15} className="text-green" />
+              {share("encryptedInBrowser")}
+            </span>
           </div>
         </section>
 
