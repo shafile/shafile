@@ -18,6 +18,7 @@ Shafile is an end-to-end encrypted file and text sharing tool. Content is encryp
 
 - Node.js 24+ (tested on Node 26)
 - pnpm
+- Python 3.10+ (optional deployment script)
 - HTTPS in production
 
 ### Run locally
@@ -26,6 +27,8 @@ Shafile is an end-to-end encrypted file and text sharing tool. Content is encryp
 pnpm install
 pnpm dev
 ```
+
+If Fast Refresh repeatedly reloads the page on Windows or a network drive, use `pnpm dev:stable` (client refresh only).
 
 Open <http://localhost:3000>. The first start creates:
 
@@ -71,17 +74,31 @@ shafile.example.com {
 }
 ```
 
-Set `TICKET_SECRET` and `IP_HASH_SECRET` explicitly in production, and set `TRUST_PROXY=true` when running behind a proxy. Stop the service before backing up `data/`. The app is currently single-instance by design (SQLite, in-memory rate limiting, and active-download tracking).
+Set `TICKET_SECRET` and `IP_HASH_SECRET` explicitly in production, and set `TRUST_PROXY=true` when running behind a proxy. Stop the service before backing up `data/`. The Node deployment is single-instance because SQLite and local ciphertext storage live on one host; rate-limit and active-download state are persisted in SQLite.
 
 ### Docker
 
 The repository includes a multi-stage `Dockerfile` and `docker-compose.yml`.
 
 ```bash
+cp .env.example .env
+# set TICKET_SECRET and IP_HASH_SECRET in .env
 docker compose up --build -d
 ```
 
 The app is available at `http://localhost:3000`. Data persists in the `shafile-data` volume. Set `TICKET_SECRET` and `IP_HASH_SECRET` explicitly in production, and adjust limits and `TRUST_PROXY` as needed. The image uses the Next.js standalone output and exposes an `/api/health` health check.
+
+Published image: [`ghcr.io/urwdy/shafile:latest`](https://github.com/urwdy/shafile/pkgs/container/shafile).
+
+### Deployment script
+
+A dependency-free Python helper covers local containers, Cloudflare Tunnel, and Cloudflare Workers:
+
+```bash
+python scripts/deploy.py
+```
+
+On Windows the container backend defaults to `wslc` (Compose inside WSL); Linux and macOS auto-detect Podman, Docker, or nerdctl. The Workers path prompts for the account token, account ID, D1/R2 settings, and generates any missing Worker secrets. See [deployment](docs/deploy.md).
 
 ### CI
 
@@ -111,6 +128,9 @@ Two supported paths:
 | `TELEGRAM_MINI_APP_SHORT_NAME` | `shafile` | Public Mini App short name configured in BotFather |
 | `MAX_SHARE_BYTES` | 5 GiB | Per-file limit |
 | `MAX_STORAGE_BYTES` | 50 GiB | Total storage limit |
+| `PASSWORD_KDF_MIN_MEMORY` | `65536` KiB | Minimum Argon2id memory accepted at share creation |
+| `PASSWORD_KDF_MIN_ITERATIONS` | `3` | Minimum Argon2id iterations accepted at share creation |
+| `CLEANUP_BUDGET` | `3` | Maximum cleanup operations per sweep |
 | `TRUST_PROXY` | `false` | Set to `true` behind a reverse proxy |
 | `CRON_SECRET` | — | Cloudflare internal cleanup bearer secret |
 
@@ -118,6 +138,7 @@ Two supported paths:
 
 ```bash
 pnpm dev          # Development server
+pnpm dev:stable   # Dev server without server-side Fast Refresh (network drives)
 pnpm build        # Production build
 pnpm start        # Production server
 pnpm lint         # ESLint
@@ -128,6 +149,7 @@ pnpm i18n:check   # Message key and placeholder checks
 pnpm cf:build     # Cloudflare Worker build
 pnpm cf:preview   # Local D1/R2 preview
 pnpm cf:deploy    # Deploy Worker
+python scripts/deploy.py  # Container / Tunnel / Workers deployment helper
 ```
 
 Playwright requires `pnpm exec playwright install chromium` on first use. Large-file streaming downloads work best in Chromium browsers such as Chrome and Edge. Other browsers fall back to in-memory decryption with a 256 MiB limit.
@@ -141,7 +163,7 @@ Shafile encrypts file and note content in the browser before any upload. The ser
 ### Cryptographic primitives
 
 - **Content encryption:** AES-256-GCM via the Web Crypto API.
-- **Password KDF:** Argon2id with 64 MiB memory, 3 iterations, 1 lane, and a 32-byte output.
+- **Password KDF:** Argon2id with 3 iterations, 1 lane, and a 32-byte output. New shares use 64 MiB by default and 128 MiB when the device reports at least 8 GB of memory; the server enforces a configurable minimum cost.
 - **Key derivation:** HKDF-SHA-256 with domain separation (`shafile/v1/wrap`, `shafile/v1/auth`).
 - **Integrity:** AES-GCM authentication tags and SHA-256 over the plaintext manifest.
 
@@ -156,7 +178,7 @@ Shafile encrypts file and note content in the browser before any upload. The ser
 ```
 header   = "SHF1" | chunkSize(u32) | noncePrefix(8B) | fileId(16B)
 part[i]  = len(u32) | AES-GCM(plaintextChunk_i)
-manifest = len(u32) | AES-GCM(JSON{name,mime,size,sha256,chunkCount})
+manifest = len(u32) | AES-GCM(JSON{name,mime,size,sha256,chunkCount,chunkSize})
 ```
 
 The nonce for each chunk is `noncePrefix || u32be(index)`. The AAD binds the header hash, share id, chunk index, and final-chunk flag. File name, MIME type, size, SHA-256, and chunk count are stored in the encrypted manifest. Text uses a single AES-GCM record with the same content key.
