@@ -205,6 +205,8 @@
     "keyMissingTelegramDesc": "Dieser Mini-App-Link enthält keinen Entschlüsselungsschlüssel. Verwende den ursprünglichen Freigabelink des Erstellers."
   },
   "Manage": {
+    "exportBackup": "Backup exportieren",
+    "importBackup": "Backup importieren",
     "title": "Meine Freigaben",
     "subtitle": "Verwaltungstoken werden nur in diesem Browser gespeichert. Das Löschen der Websitedaten entfernt diese Liste.",
     "localOnly": "Nur in diesem Browser",
@@ -266,6 +268,7 @@
     "INVALID_PASSWORD": "Dieses Passwort funktioniert nicht.",
     "RATE_LIMITED": "Zu viele Versuche. Warte einen Moment und versuche es erneut.",
     "ACCESS_TOKEN_INVALID": "Dein Zugriffsfenster ist abgelaufen. Versuche es erneut.",
+    "retryAfter": "In {seconds} s erneut versuchen.",
     "UNAUTHORIZED": "Du bist dazu nicht berechtigt.",
     "KEY_MISSING": "Der Entschlüsselungsschlüssel fehlt im Link.",
     "CORRUPT_DATA": "Die verschlüsselten Daten haben die Integritätsprüfung nicht bestanden.",

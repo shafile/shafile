@@ -31,7 +31,7 @@ export async function POST(request: Request) {
       30,
       60 * 1000,
     );
-    if (!limit.allowed) throw new AppError("RATE_LIMITED", 429);
+    if (!limit.allowed) throw new AppError("RATE_LIMITED", 429, { retryAfterSeconds: limit.retryAfterSeconds });
 
     const parsed = schema.safeParse(await readJsonLimited(request, 32 * 1024));
     if (!parsed.success) throw new AppError("INVALID_REQUEST", 400);

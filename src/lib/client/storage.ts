@@ -39,6 +39,16 @@ export function addManagement(entry: ManagedShare): void {
   saveManagement([entry, ...entries]);
 }
 
+export function mergeManagement(value: unknown): number {
+  if (!Array.isArray(value)) return 0;
+  const imported = value.filter(isManagedShare);
+  if (imported.length === 0) return 0;
+  const merged = new Map(loadManagement().map((entry) => [entry.id, entry]));
+  for (const entry of imported) merged.set(entry.id, entry);
+  saveManagement([...merged.values()]);
+  return imported.length;
+}
+
 export function removeManagement(id: string): void {
   saveManagement(loadManagement().filter((entry) => entry.id !== id));
 }

@@ -32,7 +32,7 @@ export async function PUT(
       2000,
       10 * 60 * 1000,
     );
-    if (!limit.allowed) throw new AppError("RATE_LIMITED", 429);
+    if (!limit.allowed) throw new AppError("RATE_LIMITED", 429, { retryAfterSeconds: limit.retryAfterSeconds });
 
     const body = await readBodyLimited(request, CHUNK_SIZE + 16 + 4);
     await savePart(row, index, body);

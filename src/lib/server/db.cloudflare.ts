@@ -9,6 +9,7 @@ type D1DatabaseLike = {
       all<T>(): Promise<{ results: T[] }>;
       run(): Promise<{ meta?: { changes?: number }; changes?: number }>;
     };
+    all<T>(): Promise<{ results: T[] }>;
     run(): Promise<{ meta?: { changes?: number }; changes?: number }>;
   };
   batch(
@@ -55,14 +56,14 @@ function readyDatabase(): Promise<D1DatabaseLike> {
         if (sql) await db.prepare(sql).run();
       }
 
-      try {
+      const columns = await db
+        .prepare("PRAGMA table_info(shares)")
+        .all<{ name: string }>();
+      const columnNames = columns.results.map((column) => column.name);
+      if (!columnNames.includes("telegram_user_hash")) {
         await db
           .prepare("ALTER TABLE shares ADD COLUMN telegram_user_hash BLOB")
           .run();
-      } catch (error) {
-        if (!String(error).toLowerCase().includes("duplicate column name")) {
-          throw error;
-        }
       }
       await db
         .prepare(

@@ -32,6 +32,11 @@ export function safeEqual(a: Uint8Array, b: Uint8Array): boolean {
   return diff === 0;
 }
 
+export function safeEqualStrings(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  return safeEqual(utf8(a), utf8(b));
+}
+
 type AccessPayload = {
   v: 1;
   sid: string;

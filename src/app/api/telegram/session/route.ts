@@ -33,7 +33,7 @@ export async function POST(request: Request) {
       30,
       5 * 60 * 1000,
     );
-    if (!limit.allowed) throw new AppError("RATE_LIMITED", 429);
+    if (!limit.allowed) throw new AppError("RATE_LIMITED", 429, { retryAfterSeconds: limit.retryAfterSeconds });
 
     const botToken = getTelegramBotToken();
     if (!botToken) throw new AppError("TELEGRAM_NOT_CONFIGURED", 503);
@@ -50,7 +50,7 @@ export async function POST(request: Request) {
       30,
       5 * 60 * 1000,
     );
-    if (!userLimit.allowed) throw new AppError("RATE_LIMITED", 429);
+    if (!userLimit.allowed) throw new AppError("RATE_LIMITED", 429, { retryAfterSeconds: userLimit.retryAfterSeconds });
 
     return apiJson({
       token: createTelegramSessionToken(userHash),

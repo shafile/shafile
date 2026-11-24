@@ -89,9 +89,16 @@ Set runtime variables in `wrangler.jsonc` under `vars` or in the Cloudflare dash
   "SHAFILE_RUNTIME": "cloudflare",
   "TRUST_PROXY": "true",
   "MAX_SHARE_BYTES": "5368709120",
-  "MAX_STORAGE_BYTES": "9663676416"
+  "MAX_STORAGE_BYTES": "9663676416",
+  "PASSWORD_KDF_MIN_MEMORY": "65536",
+  "PASSWORD_KDF_MIN_ITERATIONS": "3",
+  "CLEANUP_BUDGET": "3",
+  "TELEGRAM_BOT_USERNAME": "your_bot",
+  "TELEGRAM_MINI_APP_SHORT_NAME": "shafile"
 }
 ```
+
+`TELEGRAM_BOT_USERNAME` and `TELEGRAM_MINI_APP_SHORT_NAME` are omitted from the checked-in `wrangler.jsonc` so local `.dev.vars` can use E2E values; set them in the dashboard or in `wrangler.jsonc` for production. `PASSWORD_KDF_MIN_*` enforce a password KDF floor. `CLEANUP_BUDGET` caps purge operations per Cron run.
 
 `MAX_STORAGE_BYTES` is the total ciphertext budget. Keep it below your D1/R2 plan limits and leave room for manifests and headers. On Workers, the default is 9 GiB when unset; R2 Free is 10 GB. The example also sets about 9 GiB explicitly.
 
@@ -149,7 +156,7 @@ OpenNext warns that Windows is not fully supported. If the build fails while rea
 - Workers Free has a 10 ms CPU limit per request. Shafile's server work is dominated by D1/R2 I/O, but high traffic may require Workers Paid.
 - Cloudflare request bodies are limited (100 MB on Free). Shafile uploads 4 MiB encrypted chunks, so normal uploads are unaffected.
 - Workers Free allows 50 subrequests per invocation. A streaming download reads one R2 object per 4 MiB chunk, so very large shares can exceed that limit. Keep Free-plan shares around 100 MB or use Workers Paid (10,000 subrequests) for multi-GB files.
-- Cleanup is deliberately batched to at most three purge operations per Cron invocation so it stays under the Free subrequest limit.
+- Cleanup is deliberately batched (`CLEANUP_BUDGET`, default 3) so it stays under the Free subrequest limit.
 - D1 is the metadata source of truth. Back it up with D1 export/import.
 - R2 holds ciphertext. Enable a lifecycle rule only if you also account for tombstone/metadata cleanup.
 - Do not store `TICKET_SECRET`, `IP_HASH_SECRET`, `CRON_SECRET`, or `.dev.vars` in git.

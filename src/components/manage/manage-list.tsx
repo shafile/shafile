@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   CalendarClock,
+  Download,
   ExternalLink,
   KeyRound,
   Keyboard,
@@ -11,6 +12,7 @@ import {
   Plus,
   ShieldCheck,
   Trash2,
+  Upload,
   X,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -20,6 +22,7 @@ import {
   addManagement,
   clearManagement,
   loadManagement,
+  mergeManagement,
   parseManagementUrl,
   removeManagement,
 } from "@/lib/client/storage";
@@ -50,6 +53,7 @@ export function ManageList() {
   const [confirmClear, setConfirmClear] = useState(false);
   const [remoteCount, setRemoteCount] = useState(0);
   const importedRef = useRef(false);
+  const backupInputRef = useRef<HTMLInputElement>(null);
 
   const refresh = useCallback(
     async (list: Entry[], announce = false) => {
@@ -59,11 +63,25 @@ export function ManageList() {
       }
       if (announce) setRefreshing(true);
       try {
-        const response = await lookupShares(
-          list.map((entry) => ({ id: entry.id, manageToken: entry.manageToken })),
-        );
         const next: Record<string, LookupResult> = {};
-        for (const item of response.items) next[item.id] = item;
+        const batchSize = 100;
+        const batches: Entry[][] = [];
+        for (let index = 0; index < list.length; index += batchSize) {
+          batches.push(list.slice(index, index + batchSize));
+        }
+        const responses = await Promise.all(
+          batches.map((batch) =>
+            lookupShares(
+              batch.map((entry) => ({
+                id: entry.id,
+                manageToken: entry.manageToken,
+              })),
+            ),
+          ),
+        );
+        for (const response of responses) {
+          for (const item of response.items) next[item.id] = item;
+        }
         setStatuses(next);
         setError(null);
       } catch (caught) {
@@ -198,6 +216,39 @@ export function ManageList() {
     setConfirmClear(false);
   }
 
+  function exportBackup() {
+    const blob = new Blob([JSON.stringify(loadManagement(), null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `shafile-management-${new Date()
+      .toISOString()
+      .slice(0, 10)}.json`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function importBackup(file: File) {
+    setMessage(null);
+    setError(null);
+    try {
+      const parsed = JSON.parse(await file.text()) as unknown;
+      const count = mergeManagement(parsed);
+      if (count === 0) {
+        setMessage(t("importInvalid"));
+        return;
+      }
+      const list = loadManagement();
+      setEntries(list);
+      setMessage(t("importSuccess"));
+      await refresh(list);
+    } catch {
+      setMessage(t("importInvalid"));
+    }
+  }
+
   const parent = (
     <div className="container-page py-10 lg:py-14">
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -206,6 +257,34 @@ export function ManageList() {
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">{t("subtitle")}</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
+            onClick={exportBackup}
+            disabled={entries.length === 0}
+          >
+            <Download size={15} />
+            {t("exportBackup")}
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
+            onClick={() => backupInputRef.current?.click()}
+          >
+            <Upload size={15} />
+            {t("importBackup")}
+          </button>
+          <input
+            ref={backupInputRef}
+            type="file"
+            accept="application/json,.json"
+            className="hidden"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              event.target.value = "";
+              if (file) void importBackup(file);
+            }}
+          />
           <button
             type="button"
             className="btn btn-secondary btn-sm"

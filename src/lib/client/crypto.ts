@@ -28,6 +28,17 @@ export const DEFAULT_KDF = {
   version: 1,
 } as const;
 
+export function pickKdfParams(): KdfParams {
+  const deviceMemory =
+    typeof navigator !== "undefined"
+      ? Number((navigator as Navigator & { deviceMemory?: number }).deviceMemory)
+      : 0;
+  return {
+    ...DEFAULT_KDF,
+    memorySize: deviceMemory >= 8 ? 131072 : DEFAULT_KDF.memorySize,
+  };
+}
+
 export type KdfParams = {
   alg: "argon2id";
   memorySize: number;
@@ -186,10 +197,11 @@ export async function createPasswordEnvelope(
   shareId: string,
 ): Promise<{ envelope: PasswordEnvelope; authKey: Uint8Array }> {
   const salt = randomBytes(16);
+  const kdf = pickKdfParams();
   const { authKey, wrapKey } = await derivePasswordMaterial(
     password,
     salt,
-    DEFAULT_KDF,
+    kdf,
   );
   const nonce = randomBytes(NONCE_BYTES);
   const wrapped = await subtle().encrypt(
@@ -204,7 +216,7 @@ export async function createPasswordEnvelope(
       verifier: bytesToBase64Url(verifier),
       wrappedKey: bytesToBase64Url(new Uint8Array(wrapped)),
       wrapNonce: bytesToBase64Url(nonce),
-      kdf: { ...DEFAULT_KDF },
+      kdf: { ...kdf },
     },
     authKey,
   };

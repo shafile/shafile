@@ -35,7 +35,7 @@ export async function POST(
       20,
       5 * 60 * 1000,
     );
-    if (!limit.allowed) throw new AppError("RATE_LIMITED", 429);
+    if (!limit.allowed) throw new AppError("RATE_LIMITED", 429, { retryAfterSeconds: limit.retryAfterSeconds });
 
     const row = await requireShare(id);
     assertAccessible(row);

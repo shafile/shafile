@@ -737,7 +737,11 @@ export function ShareView({ id }: { id: string }) {
                     ) : (
                       <Download size={18} />
                     )}
-                    {downloading ? t("downloading") : t("download")}
+                    {downloading
+                      ? t("downloading")
+                      : downloadError
+                        ? common("retry")
+                        : t("download")}
                   </button>
                   {meta.maxViews === 1 && !downloadedBytes && (
                     <p className="max-w-sm text-xs leading-5 text-muted">
